@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>H. pylori 幽門桿菌除菌決策計算機</title>
+  
+  <!-- 引入 Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- 引入 Vue 3 -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+  <!-- PWA Manifest 動態生成 -->
+  <script>
+    const manifestJSON = {
+      name: "H. pylori 決策計算機",
+      short_name: "除菌計算機",
+      description: "基於 Maastricht VI 與 ACG 指引的幽門桿菌除菌治療決策工具",
+      start_url: "./",
+      display: "standalone",
+      background_color: "#f3f4f6",
+      theme_color: "#3b82f6",
+      icons: [{
+        src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233b82f6'%3E%3Cpath d='M12 2a10 10 0 100 20 10 10 0 000-20zM9 11a2 2 0 114 0 2 2 0 01-4 0zm3 5a3 3 0 110-6 3 3 0 010 6z'/%3E%3C/svg%3E",
+        sizes: "192x192",
+        type: "image/svg+xml"
+      }]
+    };
+    const manifestBlob = new Blob([JSON.stringify(manifestJSON)], { type: 'application/json' });
+    const manifestURL = URL.createObjectURL(manifestBlob);
+    const link = document.createElement('link');
+    link.rel = 'manifest';
+    link.href = manifestURL;
+    document.head.appendChild(link);
+  </script>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans antialiased min-h-screen">
+  <div id="app" class="max-w-3xl mx-auto px-4 py-6 md:py-10">
+    
+    <header class="mb-8 text-center">
+      <h1 class="text-3xl font-bold text-blue-700 mb-2">H. pylori 治療決策計算機</h1>
+      <p class="text-sm text-gray-500">依據 Maastricht VI/Florence & ACG 國際指引</p>
+    </header>
+
+    <div class="bg-white shadow-xl rounded-2xl overflow-hidden mb-6">
+      <div class="bg-blue-600 px-6 py-4">
+        <h2 class="text-white text-lg font-semibold">患者臨床條件評估</h2>
+      </div>
+      
+      <div class="p-6 space-y-6">
+        <!-- Q1: 治療線別 -->
+        <div>
+          <label class="block text-sm font-bold text-gray-700 mb-3">1. 請問這是哪一個階段的治療？</label>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition"
+                   :class="{'border-blue-500 bg-blue-50': formData.line === 'first'}">
+              <input type="radio" v-model="formData.line" value="first" class="w-4 h-4 text-blue-600 focus:ring-blue-500">
+              <span class="ml-3 font-medium">第一線治療 (初次除菌)</span>
+            </label>
+            <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition"
+                   :class="{'border-blue-500 bg-blue-50': formData.line === 'second'}">
+              <input type="radio" v-model="formData.line" value="second" class="w-4 h-4 text-blue-600 focus:ring-blue-500">
+              <span class="ml-3 font-medium">救援治療 (Rescue / 第二線以上)</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Q2: 盤尼西林過敏 -->
+        <div>
+          <label class="block text-sm font-bold text-gray-700 mb-3">2. 患者是否對盤尼西林 (Penicillin) 過敏？</label>
+          <div class="grid grid-cols-2 gap-3">
+            <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition"
+                   :class="{'border-blue-500 bg-blue-50': formData.allergy === 'yes'}">
+              <input type="radio" v-model="formData.allergy" value="yes" class="w-4 h-4 text-blue-600">
+              <span class="ml-3 font-medium">是 (Yes)</span>
+            </label>
+            <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition"
+                   :class="{'border-blue-500 bg-blue-50': formData.allergy === 'no'}">
+              <input type="radio" v-model="formData.allergy" value="no" class="w-4 h-4 text-blue-600">
+              <span class="ml-3 font-medium">否 (No)</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Q3: 第一線特有 - 巨環類抗藥性 -->
+        <div v-if="formData.line === 'first'" class="animate-fade-in">
+          <label class="block text-sm font-bold text-gray-700 mb-3">3. 當地 Clarithromycin 巨環類抗藥性是否高於 15%？</label>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition"
+                   :class="{'border-blue-500 bg-blue-50': formData.resistance === 'high'}">
+              <input type="radio" v-model="formData.resistance" value="high" class="w-4 h-4 text-blue-600">
+              <span class="ml-3 font-medium">是 (> 15% 或未知，台灣多屬此類)</span>
+            </label>
+            <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition"
+                   :class="{'border-blue-500 bg-blue-50': formData.resistance === 'low'}">
+              <input type="radio" v-model="formData.resistance" value="low" class="w-4 h-4 text-blue-600">
+              <span class="ml-3 font-medium">否 (< 15%)</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Q4: 救援治療特有 - 先前失敗處方 -->
+        <div v-if="formData.line === 'second'" class="animate-fade-in">
+          <label class="block text-sm font-bold text-gray-700 mb-3">3. 先前失敗的除菌處方為何？</label>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition"
+                   :class="{'border-blue-500 bg-blue-50': formData.prevFailed === 'triple'}">
+              <input type="radio" v-model="formData.prevFailed" value="triple" class="w-4 h-4 text-blue-600">
+              <span class="ml-3 font-medium">三合一 / 序列性 (含 Clarithromycin)</span>
+            </label>
+            <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition"
+                   :class="{'border-blue-500 bg-blue-50': formData.prevFailed === 'bqt'}">
+              <input type="radio" v-model="formData.prevFailed" value="bqt" class="w-4 h-4 text-blue-600">
+              <span class="ml-3 font-medium">四合一鉍劑療法 (BQT)</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 結果顯示區塊 -->
+    <div class="bg-green-50 border-l-4 border-green-500 p-6 rounded-r-lg shadow-md">
+      <h3 class="text-green-800 text-sm font-bold uppercase tracking-wider mb-2">指引推薦處方</h3>
+      <div class="text-2xl font-bold text-green-900 mb-4">{{ recommendation.title }}</div>
+      
+      <div class="bg-white rounded-lg p-4 border border-green-200 mb-4">
+        <h4 class="font-bold text-gray-700 border-b pb-2 mb-2">建議藥物劑量</h4>
+        <ul class="list-disc pl-5 space-y-1 text-gray-600 font-medium">
+          <li v-for="(med, idx) in recommendation.medications" :key="idx">{{ med }}</li>
+        </ul>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div class="bg-white rounded-lg p-3 border border-green-200">
+          <div class="text-xs text-gray-500 font-bold uppercase">療程天數</div>
+          <div class="text-lg font-bold text-gray-800">{{ recommendation.duration }}</div>
+        </div>
+        <div class="bg-white rounded-lg p-3 border border-green-200">
+          <div class="text-xs text-gray-500 font-bold uppercase">預估除菌率</div>
+          <div class="text-lg font-bold text-gray-800">{{ recommendation.prognosis }}</div>
+        </div>
+      </div>
+
+      <div v-if="recommendation.note" class="mt-4 text-sm text-gray-600 bg-yellow-50 border border-yellow-200 p-3 rounded">
+        <strong>💡 臨床提醒：</strong> {{ recommendation.note }}
+      </div>
+    </div>
+    
+  </div>
+
+  <script>
+    const { createApp, ref, computed } = Vue;
+
+    createApp({
+      setup() {
+        const formData = ref({
+          line: 'first',
+          allergy: 'no',
+          resistance: 'high',
+          prevFailed: 'triple'
+        });
+
+        const recommendation = computed(() => {
+          const { line, allergy, resistance, prevFailed } = formData.value;
+
+          if (line === 'first') {
+            if (allergy === 'yes') {
+              return {
+                title: '四合一鉍劑療法 (Bismuth Quadruple Therapy, BQT)',
+                medications: [
+                  'PPI (標準劑量) 一天兩次 (BID)',
+                  'Bismuth subcitrate 120mg 一天四次 (QID)',
+                  'Tetracycline 500mg 一天四次 (QID)',
+                  'Metronidazole 500mg 一天三次或四次 (TID/QID)'
+                ],
+                duration: '14 天',
+                prognosis: '≥ 90%',
+                note: '患者有盤尼西林過敏，避用 Amoxicillin。若取得鉍劑困難，臨床上可能會調整為含 Levofloxacin 的處方，但抗藥性風險較高。'
+              };
+            } else {
+              if (resistance === 'high') {
+                return {
+                  title: '四合一鉍劑療法 (BQT) 或 P-CAB 雙重療法',
+                  medications: [
+                    'PPI (標準劑量) 一天兩次 (BID)',
+                    'Bismuth subcitrate 120mg 一天四次 (QID)',
+                    'Tetracycline 500mg 一天四次 (QID)',
+                    'Metronidazole 500mg 一天三/四次 (TID/QID)'
+                  ],
+                  duration: '14 天',
+                  prognosis: '90 - 95%',
+                  note: 'Clarithromycin 抗藥性高地區的首選為 BQT。近年來，以新型鉀離子競爭性酸阻斷劑 (P-CAB, 如 Vonoprazan) 搭配 Amoxicillin 的雙重療法也成為強效的替代方案。'
+                };
+              } else {
+                return {
+                  title: '標準三合一療法 (Standard Triple Therapy)',
+                  medications: [
+                    'PPI (標準劑量) 一天兩次 (BID)',
+                    'Clarithromycin 500mg 一天兩次 (BID)',
+                    'Amoxicillin 1000mg 一天兩次 (BID)'
+                  ],
+                  duration: '14 天',
+                  prognosis: '80 - 85%',
+                  note: '僅適用於確認 Clarithromycin 抗藥性低於 15% 的地區。為提高成功率，療程必須維持 14 天。'
+                };
+              }
+            }
+          } else {
+            // Second-line (Rescue)
+            if (allergy === 'yes') {
+              return {
+                title: 'Levofloxacin 救援療法 (不含 Amoxicillin)',
+                medications: [
+                  'PPI (標準劑量) 一天兩次 (BID)',
+                  'Levofloxacin 500mg 一天一次 (QD)',
+                  'Tetracycline 500mg 或 Bismuth (依據醫師經驗組合)'
+                ],
+                duration: '14 天',
+                prognosis: '75 - 85%',
+                note: '盤尼西林過敏者的救援選擇受限，若先前未使用過鉍劑，強烈建議直接改用完整 BQT 療法。'
+              };
+            } else {
+              if (prevFailed === 'triple') {
+                return {
+                  title: '四合一鉍劑療法 (Bismuth Quadruple Therapy, BQT)',
+                  medications: [
+                    'PPI (標準劑量) 一天兩次 (BID)',
+                    'Bismuth subcitrate 120mg 一天四次 (QID)',
+                    'Tetracycline 500mg 一天四次 (QID)',
+                    'Metronidazole 500mg 一天三/四次 (TID/QID)'
+                  ],
+                  duration: '14 天',
+                  prognosis: '≥ 90%',
+                  note: '首次使用 Clarithromycin 失敗後，BQT 為指引強烈建議的標準救援處方。'
+                };
+              } else {
+                return {
+                  title: 'Levofloxacin 三合一 或 HDDT (高劑量雙重療法)',
+                  medications: [
+                    '【選擇 A】PPI BID + Levofloxacin 500mg QD + Amoxicillin 1g BID',
+                    '【選擇 B】PPI QID + Amoxicillin 750mg QID (HDDT)'
+                  ],
+                  duration: '14 天',
+                  prognosis: '80 - 85%',
+                  note: '若先前 BQT 失敗，救援處方可選擇含 Levofloxacin 的處方，或透過提升胃內 pH 值的高劑量雙重療法 (HDDT) / P-CAB 療法。'
+                };
+              }
+            }
+          }
+        });
+
+        return { formData, recommendation };
+      }
+    }).mount('#app');
+  </script>
+  <style>
+    .animate-fade-in { animation: fadeIn 0.3s ease-in-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</body>
+</html>
