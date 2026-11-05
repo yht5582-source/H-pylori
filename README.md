@@ -17,11 +17,12 @@
 
 - 第 7.1 節：確診後可做初次除菌，療程以二週為原則，再次治療需說明理由
 - Levofloxacin（第 10.8.2.3 條）未列幽門桿菌；Clarithromycin 除菌不超過 14 日
-- 健保用藥品項查無 Vonoprazan；Rifabutin、鉍劑、Tetracycline 有品項，但收載不等於可申報或有貨
+- Vonoprazan 有台灣藥證（Vocinti，衛部藥輸字第 027623 號），健保用藥品項查無，多為自費
+- Rifabutin、鉍劑、Tetracycline 有品項，但收載不等於可申報或有貨
 
 ## 尚未查證
 
-- Vonoprazan 的台灣藥證（TFDA 查詢需人工驗證碼）
+- Vocinti 仿單原文與自費價格
 - 各院院內品項與供貨；每日 4 次 PPI 的申報
 - Yang 2015 全文與 PHALCON-HP 計畫書
 - P-CAB 檢測前停藥天數：仿單與指引都未明定，工具假設至少 14 天

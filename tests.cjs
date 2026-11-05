@@ -105,14 +105,37 @@ t('amoxicillin-free P-CAB doses', () => {
   assert.strictEqual(HP.REG.PCAB_NOAMOX.duration, '14 天');
 });
 t('levofloxacin regimens flag the NHI rule', () => ['LEVO_T', 'LEVO_M', 'LBQ'].forEach(k => assert(/未列幽門桿菌/.test(HP.REG[k].nhi), k)));
-t('vonoprazan regimens flag no NHI listing', () => ['VA', 'PCAB_NOAMOX'].forEach(k => assert(/查無 Vonoprazan/.test(HP.REG[k].nhi), k)));
+t('vonoprazan regimens flag no NHI listing', () => ['VA', 'PCAB_NOAMOX'].forEach(k => assert(/027623/.test(HP.REG[k].nhi) && /自費/.test(HP.REG[k].nhi), k)));
 t('P-CAB hold is labelled an assumption', () => assert(HP.TOC.some(x => /P-CAB/.test(x) && /假設/.test(x))));
 t('BQT unavailable lists an option without vonoprazan', () => {
   const r = HP.recommend({ bqtOff: true });
   assert(r.alts.some(a => a.key === 'HDDT') && r.alts.some(a => a.key === 'RIF'));
   assert(r.notes.some(n => /Vonoprazan/.test(n)));
 });
-t('unverified brand name not on page', () => assert(!/福速胃/.test(html)));
+t('wrong brand name not on page', () => assert(!/福速胃/.test(html)));
+t('vonoprazan label warnings shown', () => assert(/肝功能不全/.test(HP.REG.VA.safety) && /atazanavir/.test(HP.REG.VA.safety)));
+t('off-label partner antibiotics flagged', () => assert(/不在所見的台灣用法內/.test(HP.REG.PCAB_NOAMOX.nhi)));
+
+// --- Levofloxacin-tetracycline quadruple ---
+const hasTLQ = o => HP.recommend(o).alts.some(a => a.key === 'TLQ');
+t('TLQ doses and no amoxicillin', () => {
+  const m = HP.REG.TLQ.meds.join(' ');
+  assert(/Tetracycline 500 mg，每日 4 次/.test(m) && /Levofloxacin 500 mg，每日 1 次/.test(m) && /bismuthate 300 mg，每日 4 次/.test(m));
+  assert(!/Amoxicillin/.test(m));
+  assert.strictEqual(HP.REG.TLQ.duration, '10–14 天');
+});
+t('TLQ offered after triple failure', () => assert(hasTLQ({ line: 'rescue', clari: true })));
+t('TLQ offered after BQT failure', () => assert(hasTLQ({ line: 'rescue', bqt: true })));
+t('TLQ offered to allergic patients after BQT failure', () => assert(hasTLQ({ line: 'rescue', allergy: 'confirmed', bqt: true })));
+t('TLQ never first line', () => assert(!hasTLQ({ line: 'first' }) && !hasTLQ({ line: 'first', bqtOff: true })));
+t('TLQ excluded by prior levofloxacin', () => assert(!hasTLQ({ line: 'rescue', bqt: true, levo: true })));
+t('TLQ excluded by levofloxacin resistance', () => assert(!hasTLQ({ line: 'rescue', bqt: true, astLevo: 'R' })));
+t('TLQ excluded when BQT drugs unavailable', () => assert(!hasTLQ({ line: 'rescue', clari: true, bqtOff: true })));
+t('TLQ unknown susceptibility warns; sensitive does not', () => {
+  assert(/建議先檢測/.test(HP.recommend({ line: 'rescue', bqt: true }).alts.find(a => a.key === 'TLQ').when));
+  assert(!/建議先檢測/.test(HP.recommend({ line: 'rescue', bqt: true, rif: true, astLevo: 'S' }).alts.find(a => a.key === 'TLQ').when));
+});
+t('TLQ flags the NHI rule', () => assert(/未列幽門桿菌/.test(HP.REG.TLQ.nhi)));
 
 // --- Teaching content ---
 t('6 cases', () => assert.strictEqual(TEACH.CASES.length, 6));
