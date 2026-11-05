@@ -1,43 +1,33 @@
-# 幽門螺旋桿菌 (H. pylori) 除菌治療決策計算機
+# H. pylori 除菌決策工具
 
-這是一個基於 **Maastricht VI/Florence 國際共識**與 **ACG (美國腸胃科學會) 指引** 所開發的互動式單頁網頁應用程式 (PWA)。旨在協助胃腸肝膽科醫師及臨床醫護人員，根據患者的過敏史、當地抗藥性及過去治療經驗，快速產出最佳的除菌處方建議。
+成人幽門桿菌除菌的互動決策工具，含示範病例 6 例、考題 20 題（基礎 10、高階 10）與心智圖。
 
-## 專案特色
+線上版：https://yht5582-source.github.io/H-pylori/
 
-*   **接軌國際指引**：將複雜的 Maastricht VI 與 ACG 決策樹，轉化為直覺的逐步問答介面。
-*   **精準處方建議**：不僅給出療法名稱（如 BQT 四合一鉍劑療法），更直接列出用藥天數、各項藥物劑量與預估除菌成功率。
-*   **純前端端側運算**：採用 Vue.js 進行即時邏輯判斷，所有運算皆在使用者裝置的瀏覽器內完成，無需後端資料庫，無病患隱私外洩風險。
-*   **支援 PWA (漸進式網頁應用程式)**：使用 Tailwind CSS 打造跨裝置介面，並內建動態 Manifest，可直接在手機瀏覽器點選「加入主畫面」，如同原生 App 般於門診離線開啟。
+## 依據
 
-## 醫學決策邏輯 (決策樹)
+- ACG Clinical Guideline, Am J Gastroenterol 2024（僅讀摘要，細節來自 UIC FAQ 與 G&H 2026 整理）
+- Maastricht VI/Florence, Gut 2022
+- Taipei Global Consensus II, Gut 2025
+- 台灣 2019–2024 抗藥性：WJG 2025 社論轉述的 1408 株研究（原始論文未讀）
 
-系統將根據以下 3 個關鍵維度進行處方分流：
+三份指引意見不同時，頁面會並列呈現，例如三合一失敗後能否用 Levofloxacin。
 
-### 1. 治療線別 (First-line vs. Rescue)
-*   **第一線治療**：評估初次感染除菌。
-*   **救援治療**：評估第一線或多次除菌失敗後的處置。
+## 尚未查證
 
-### 2. 盤尼西林 (Penicillin) 過敏狀態
-*   **過敏者**：嚴格避用 Amoxicillin，第一線直接轉向四合一鉍劑療法 (BQT) 或其他替代方案。
-*   **無過敏者**：根據抗藥性決定處方。
+- 台灣健保給付與院內品項（Vonoprazan、Rifabutin、鉍劑等）
+- 高劑量雙重療法的原始試驗劑量（沿用舊版）
+- Vonoprazan 與 Tetracycline 或 Minocycline 雙重療法的劑量（因此頁面不列）
+- P-CAB 檢測前停藥天數（工具假設至少比照 PPI）
 
-### 3. 當地抗藥性與過往用藥史
-*   **第一線且無過敏**：若當地 Clarithromycin 抗藥性 > 15% (如台灣多數地區)，捨棄標準三合一，改建議 BQT 或新型 P-CAB 雙重療法。
-*   **救援治療**：若前次使用含 Clarithromycin 處方失敗，則救援首選為 BQT；若前次 BQT 失敗，則建議含 Levofloxacin 的三合一或高劑量雙重療法 (HDDT)。
+## 檔案
 
-## 檔案結構
+- `index.html`：單一頁面，無第三方相依。決策引擎在 `/*ENGINE-START*/`，教學內容在 `/*TEACH-START*/`
+- `sw.js`、`manifest.webmanifest`、`icon.svg`：離線與加入主畫面
+- `tests.cjs`：`node tests.cjs`，含所有輸入組合的安全檢查
 
-*   `hpylori-calculator.html`: 包含 HTML 結構、Tailwind 樣式、Vue.js 邏輯與 PWA 設定的完整單一檔案。
-*   `README.md`: 本說明文件。
+更新內容後，請同步修改 `sw.js` 的 `CACHE` 版本。推送到 `main` 即部署（GitHub Pages）。
 
-## 部署與使用方式
+## 聲明
 
-本專案為零相依性 (Zero Dependencies) 的純前端架構：
-
-1.  將 `hpylori-calculator.html` 檔案上傳至任何靜態網頁伺服器（例如：GitHub Pages、Vercel 或個人主機）。
-2.  取得網址後，在手機或平板的瀏覽器（Safari 或 Chrome）中開啟。
-3.  點擊瀏覽器的分享按鈕或選單中的「加入主畫面 (Add to Home Screen)」，即可在桌面建立捷徑。
-
-## 聲明與免責條款
-
-本互動網頁僅為臨床決策輔助工具 (Clinical Decision Support Tool)。幽門螺旋桿菌的治療需考量當地最新的抗藥性流行病學數據與藥物可近性（如鉍劑缺藥狀況）。實際處方劑量、頻次與療程，仍須由主治醫師依據病患之肝腎功能、共病症及實際臨床狀況進行最終評估與調整。
+本工具僅為臨床決策輔助，不適用於孕婦、哺乳者與兒童。實際處方須由醫師依病人肝腎功能、併用藥與藥品可近性判斷。所有運算在瀏覽器內完成，不儲存也不傳送資料。

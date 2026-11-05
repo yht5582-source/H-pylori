@@ -1,262 +1,594 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>H. pylori 幽門桿菌除菌決策計算機</title>
-  
-  <!-- 引入 Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  
-  <!-- 引入 Vue 3 -->
-  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-
-  <!-- PWA Manifest 動態生成 -->
-  <script>
-    const manifestJSON = {
-      name: "H. pylori 決策計算機",
-      short_name: "除菌計算機",
-      description: "基於 Maastricht VI 與 ACG 指引的幽門桿菌除菌治療決策工具",
-      start_url: "./",
-      display: "standalone",
-      background_color: "#f3f4f6",
-      theme_color: "#3b82f6",
-      icons: [{
-        src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233b82f6'%3E%3Cpath d='M12 2a10 10 0 100 20 10 10 0 000-20zM9 11a2 2 0 114 0 2 2 0 01-4 0zm3 5a3 3 0 110-6 3 3 0 010 6z'/%3E%3C/svg%3E",
-        sizes: "192x192",
-        type: "image/svg+xml"
-      }]
-    };
-    const manifestBlob = new Blob([JSON.stringify(manifestJSON)], { type: 'application/json' });
-    const manifestURL = URL.createObjectURL(manifestBlob);
-    const link = document.createElement('link');
-    link.rel = 'manifest';
-    link.href = manifestURL;
-    document.head.appendChild(link);
-  </script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>H. pylori 除菌決策工具</title>
+<meta name="description" content="依 ACG 2024、Maastricht VI 與 Taipei Global Consensus II 的幽門桿菌除菌決策工具，含示範病例、考題與心智圖。">
+<meta name="theme-color" content="#2563eb">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<style>
+:root{--blue:#2563eb;--blue-d:#1d4ed8;--blue-l:#eff6ff;--green:#15803d;--green-d:#14532d;--green-l:#f0fdf4;--green-b:#bbf7d0;--amber-l:#fffbeb;--amber-b:#fde68a;--amber-d:#92400e;--red-l:#fef2f2;--red-b:#fecaca;--red-d:#991b1b;--ink:#1f2937;--mute:#4b5563;--line:#d1d5db;--bg:#f3f4f6;--card:#fff}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 -apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif}
+.wrap{max-width:860px;margin:0 auto;padding:24px 16px 56px}
+header{text-align:center;margin-bottom:18px}
+h1{font-size:1.75rem;line-height:1.3;color:var(--blue-d);margin:0 0 4px}
+header p{margin:0;font-size:.875rem;color:var(--mute)}
+h2,h3,h4{line-height:1.35}
+.tabs{display:flex;gap:6px;overflow-x:auto;margin-bottom:18px;padding-bottom:4px}
+.tabs button{flex:0 0 auto;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:8px 14px;font:inherit;font-size:.9375rem;font-weight:600;cursor:pointer;min-height:44px}
+.tabs button[aria-selected=true]{background:var(--blue);border-color:var(--blue);color:#fff}
+:focus-visible{outline:3px solid #f59e0b;outline-offset:2px}
+.card{background:var(--card);border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,.08);overflow:hidden;margin-bottom:18px}
+.card>.hd{background:var(--blue);color:#fff;padding:12px 20px;font-weight:600;font-size:1.0625rem;margin:0}
+.bd{padding:20px}
+fieldset{border:0;padding:0;margin:0 0 20px}
+fieldset[hidden]{display:none}
+legend{font-weight:700;font-size:.9375rem;padding:0;margin-bottom:8px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}
+.opt{display:flex;align-items:flex-start;gap:9px;border:1px solid var(--line);border-radius:9px;padding:10px 12px;cursor:pointer;min-height:44px}
+.opt input{margin:5px 0 0;width:16px;height:16px;flex:none}
+.opt:has(input:checked){border-color:var(--blue);background:var(--blue-l)}
+.hint{font-size:.8125rem;color:var(--mute);margin:6px 0 0}
+.result{background:var(--green-l);border-left:5px solid var(--green);border-radius:0 12px 12px 0;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,.08);margin-bottom:18px}
+.result.refer{background:var(--amber-l);border-left-color:#d97706}
+.eyebrow{font-size:.8125rem;font-weight:700;color:var(--green);margin:0 0 4px}
+.result.refer .eyebrow{color:var(--amber-d)}
+.rx-title{font-size:1.375rem;font-weight:700;line-height:1.35;margin:0 0 14px}
+.box{background:#fff;border:1px solid var(--green-b);border-radius:9px;padding:12px 14px;margin-bottom:12px}
+.result.refer .box{border-color:var(--amber-b)}
+.box h4{margin:0 0 6px;font-size:.9375rem}
+.box ul{margin:0;padding-left:20px}
+.box li{margin:2px 0}
+.two{display:grid;grid-template-columns:minmax(110px,1fr) 3fr;gap:10px}
+.lab{font-size:.75rem;font-weight:700;color:var(--mute);margin-bottom:2px}
+.alert{border-radius:9px;padding:10px 14px;margin-bottom:10px;font-size:.9375rem}
+.alert.red{background:var(--red-l);border:1px solid var(--red-b);color:var(--red-d)}
+.alert.amb{background:var(--amber-l);border:1px solid var(--amber-b);color:var(--amber-d)}
+.alt{border-top:1px solid #e5e7eb;padding-top:9px;margin-top:9px}
+.alt:first-of-type{border-top:0;padding-top:0;margin-top:0}
+.alt b{display:block}
+.when{font-size:.875rem;color:var(--mute)}
+.demo{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;background:#ede9fe;border:1px solid #c4b5fd;color:#4c1d95;border-radius:9px;padding:8px 12px;margin-bottom:12px;font-size:.9375rem}
+.btn{border:1px solid var(--blue);background:var(--blue);color:#fff;border-radius:8px;padding:8px 14px;font:inherit;font-weight:600;cursor:pointer;min-height:44px}
+.btn.ghost{background:#fff;color:var(--blue-d)}
+.case h3{margin:0 0 6px;font-size:1.0625rem}
+.case dl{margin:10px 0;display:grid;grid-template-columns:max-content 1fr;gap:3px 12px;font-size:.9375rem}
+.case dt{font-weight:700;color:var(--mute)}
+.case dd{margin:0}
+details{margin:10px 0}
+summary{cursor:pointer;font-weight:600;color:var(--blue-d);min-height:32px}
+.tag{display:inline-block;font-size:.75rem;font-weight:700;border-radius:6px;padding:1px 8px;margin-right:6px}
+.tag.b{background:#dbeafe;color:#1e40af}
+.tag.a{background:#fce7f3;color:#9d174d}
+.q{border-bottom:1px solid #e5e7eb;padding:16px 0}
+.q:last-child{border-bottom:0}
+.q p.stem{margin:0 0 10px;font-weight:600}
+.q .choice{display:block;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:9px;padding:9px 12px;margin-bottom:7px;font:inherit;color:inherit;cursor:pointer;min-height:44px}
+.q .choice:disabled{cursor:default;color:inherit}
+.q .choice.ok{background:var(--green-l);border-color:var(--green);font-weight:600}
+.q .choice.no{background:var(--red-l);border-color:#dc2626}
+.q .why{background:var(--blue-l);border-radius:9px;padding:10px 12px;font-size:.9375rem;margin-top:4px}
+.score{position:sticky;top:0;z-index:2;background:var(--card);border-bottom:1px solid var(--line);padding:10px 20px;font-weight:700;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.map{display:grid;grid-template-columns:150px 1fr;gap:0 20px;align-items:center}
+.root{background:var(--blue);color:#fff;border-radius:12px;padding:16px 12px;text-align:center;font-weight:700}
+.branches{border-left:3px solid #93c5fd;padding-left:16px}
+.branch{position:relative;background:#fff;border:1px solid var(--line);border-top:4px solid var(--c,#2563eb);border-radius:9px;padding:9px 13px;margin:9px 0}
+.branch:before{content:"";position:absolute;left:-19px;top:22px;width:16px;border-top:3px solid #93c5fd}
+.branch h4{margin:0 0 3px;font-size:.9375rem}
+.branch ul{margin:0;padding-left:18px;font-size:.875rem}
+table{border-collapse:collapse;width:100%;font-size:.875rem}
+th,td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+th{background:var(--blue-l)}
+.tw{overflow-x:auto}
+.src li{margin-bottom:8px;font-size:.9375rem}
+a{color:var(--blue-d)}
+footer{font-size:.8125rem;color:var(--mute);text-align:center}
+@media (max-width:640px){.map{grid-template-columns:1fr}.root{margin-bottom:8px}.branches{padding-left:12px}.branch:before{left:-15px;width:12px}.two{grid-template-columns:1fr}.rx-title{font-size:1.2rem}}
+@media print{.tabs,.btn{display:none}body{background:#fff}.card,.result{box-shadow:none}}
+</style>
 </head>
-<body class="bg-gray-100 text-gray-800 font-sans antialiased min-h-screen">
-  <div id="app" class="max-w-3xl mx-auto px-4 py-6 md:py-10">
-    
-    <header class="mb-8 text-center">
-      <h1 class="text-3xl font-bold text-blue-700 mb-2">H. pylori 治療決策計算機</h1>
-      <p class="text-sm text-gray-500">依據 Maastricht VI/Florence & ACG 國際指引</p>
-    </header>
+<body>
+<div class="wrap">
+<header>
+  <h1>H. pylori 除菌決策工具</h1>
+  <p>依 ACG 2024、Maastricht VI/Florence 與 Taipei Global Consensus II｜v2.0｜成人臨床決策輔助</p>
+</header>
 
-    <div class="bg-white shadow-xl rounded-2xl overflow-hidden mb-6">
-      <div class="bg-blue-600 px-6 py-4">
-        <h2 class="text-white text-lg font-semibold">患者臨床條件評估</h2>
+<nav class="tabs" role="tablist" aria-label="頁面分頁">
+  <button role="tab" id="t-tool" aria-controls="tool" data-tab="tool">決策工具</button>
+  <button role="tab" id="t-cases" aria-controls="cases" data-tab="cases">示範病例</button>
+  <button role="tab" id="t-quiz" aria-controls="quiz" data-tab="quiz">考題</button>
+  <button role="tab" id="t-map" aria-controls="map" data-tab="map">心智圖</button>
+  <button role="tab" id="t-ref" aria-controls="ref" data-tab="ref">指引與來源</button>
+</nav>
+
+<main>
+<section id="tool" role="tabpanel" aria-labelledby="t-tool">
+  <div id="demoBar" class="demo" hidden><span id="demoText"></span><button class="btn ghost" id="demoClear" type="button">清除示範資料</button></div>
+  <div class="card">
+    <h2 class="hd">患者條件</h2>
+    <form class="bd" id="form" onsubmit="return false">
+      <fieldset><legend>1. 治療階段</legend><div class="opts">
+        <label class="opt"><input type="radio" name="line" value="first"><span>第一線（初次除菌）</span></label>
+        <label class="opt"><input type="radio" name="line" value="rescue"><span>救援（曾除菌失敗）</span></label>
+      </div></fieldset>
+
+      <fieldset><legend>2. 盤尼西林過敏</legend><div class="opts">
+        <label class="opt"><input type="radio" name="allergy" value="none"><span>無</span></label>
+        <label class="opt"><input type="radio" name="allergy" value="reported"><span>病人自述，未經驗證</span></label>
+        <label class="opt"><input type="radio" name="allergy" value="confirmed"><span>已確認</span></label>
+      </div></fieldset>
+
+      <fieldset id="fsRes"><legend>3. 當地 Clarithromycin 抗藥性</legend><div class="opts">
+        <label class="opt"><input type="radio" name="resistance" value="high"><span>&gt;15% 或不明</span></label>
+        <label class="opt"><input type="radio" name="resistance" value="low"><span>低，且當地證實三合一除菌率 ≥90%</span></label>
       </div>
-      
-      <div class="p-6 space-y-6">
-        <!-- Q1: 治療線別 -->
-        <div>
-          <label class="block text-sm font-bold text-gray-700 mb-3">1. 請問這是哪一個階段的治療？</label>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition"
-                   :class="{'border-blue-500 bg-blue-50': formData.line === 'first'}">
-              <input type="radio" v-model="formData.line" value="first" class="w-4 h-4 text-blue-600 focus:ring-blue-500">
-              <span class="ml-3 font-medium">第一線治療 (初次除菌)</span>
-            </label>
-            <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition"
-                   :class="{'border-blue-500 bg-blue-50': formData.line === 'second'}">
-              <input type="radio" v-model="formData.line" value="second" class="w-4 h-4 text-blue-600 focus:ring-blue-500">
-              <span class="ml-3 font-medium">救援治療 (Rescue / 第二線以上)</span>
-            </label>
-          </div>
-        </div>
+      <p class="hint">台灣 2019–2024 初治菌株為 13.7–24.3%，不宜直接視為低抗藥性。</p></fieldset>
 
-        <!-- Q2: 盤尼西林過敏 -->
-        <div>
-          <label class="block text-sm font-bold text-gray-700 mb-3">2. 患者是否對盤尼西林 (Penicillin) 過敏？</label>
-          <div class="grid grid-cols-2 gap-3">
-            <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition"
-                   :class="{'border-blue-500 bg-blue-50': formData.allergy === 'yes'}">
-              <input type="radio" v-model="formData.allergy" value="yes" class="w-4 h-4 text-blue-600">
-              <span class="ml-3 font-medium">是 (Yes)</span>
-            </label>
-            <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition"
-                   :class="{'border-blue-500 bg-blue-50': formData.allergy === 'no'}">
-              <input type="radio" v-model="formData.allergy" value="no" class="w-4 h-4 text-blue-600">
-              <span class="ml-3 font-medium">否 (No)</span>
-            </label>
-          </div>
-        </div>
+      <fieldset id="fsMac"><legend>曾使用巨環類抗生素</legend><div class="opts">
+        <label class="opt"><input type="checkbox" name="macrolide"><span>是（例如曾因其他感染使用）</span></label>
+      </div></fieldset>
 
-        <!-- Q3: 第一線特有 - 巨環類抗藥性 -->
-        <div v-if="formData.line === 'first'" class="animate-fade-in">
-          <label class="block text-sm font-bold text-gray-700 mb-3">3. 當地 Clarithromycin 巨環類抗藥性是否高於 15%？</label>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition"
-                   :class="{'border-blue-500 bg-blue-50': formData.resistance === 'high'}">
-              <input type="radio" v-model="formData.resistance" value="high" class="w-4 h-4 text-blue-600">
-              <span class="ml-3 font-medium">是 (> 15% 或未知，台灣多屬此類)</span>
-            </label>
-            <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition"
-                   :class="{'border-blue-500 bg-blue-50': formData.resistance === 'low'}">
-              <input type="radio" v-model="formData.resistance" value="low" class="w-4 h-4 text-blue-600">
-              <span class="ml-3 font-medium">否 (< 15%)</span>
-            </label>
-          </div>
-        </div>
+      <fieldset id="fsFails"><legend>3. 已失敗次數</legend><div class="opts">
+        <label class="opt"><input type="radio" name="fails" value="1"><span>1 次</span></label>
+        <label class="opt"><input type="radio" name="fails" value="2"><span>2 次以上</span></label>
+      </div></fieldset>
 
-        <!-- Q4: 救援治療特有 - 先前失敗處方 -->
-        <div v-if="formData.line === 'second'" class="animate-fade-in">
-          <label class="block text-sm font-bold text-gray-700 mb-3">3. 先前失敗的除菌處方為何？</label>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition"
-                   :class="{'border-blue-500 bg-blue-50': formData.prevFailed === 'triple'}">
-              <input type="radio" v-model="formData.prevFailed" value="triple" class="w-4 h-4 text-blue-600">
-              <span class="ml-3 font-medium">三合一 / 序列性 (含 Clarithromycin)</span>
-            </label>
-            <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition"
-                   :class="{'border-blue-500 bg-blue-50': formData.prevFailed === 'bqt'}">
-              <input type="radio" v-model="formData.prevFailed" value="bqt" class="w-4 h-4 text-blue-600">
-              <span class="ml-3 font-medium">四合一鉍劑療法 (BQT)</span>
-            </label>
-          </div>
-        </div>
-      </div>
-    </div>
+      <fieldset id="fsPrior"><legend>4. 曾用過的處方（可複選）</legend><div class="opts">
+        <label class="opt"><input type="checkbox" name="clari"><span>含 Clarithromycin</span></label>
+        <label class="opt"><input type="checkbox" name="levo"><span>含 Levofloxacin</span></label>
+        <label class="opt"><input type="checkbox" name="bqt"><span>鉍劑四合一（BQT）</span></label>
+        <label class="opt"><input type="checkbox" name="rif"><span>含 Rifabutin</span></label>
+        <label class="opt"><input type="checkbox" name="dual"><span>高劑量雙重或 P-CAB 雙重</span></label>
+      </div></fieldset>
 
-    <!-- 結果顯示區塊 -->
-    <div class="bg-green-50 border-l-4 border-green-500 p-6 rounded-r-lg shadow-md">
-      <h3 class="text-green-800 text-sm font-bold uppercase tracking-wider mb-2">指引推薦處方</h3>
-      <div class="text-2xl font-bold text-green-900 mb-4">{{ recommendation.title }}</div>
-      
-      <div class="bg-white rounded-lg p-4 border border-green-200 mb-4">
-        <h4 class="font-bold text-gray-700 border-b pb-2 mb-2">建議藥物劑量</h4>
-        <ul class="list-disc pl-5 space-y-1 text-gray-600 font-medium">
-          <li v-for="(med, idx) in recommendation.medications" :key="idx">{{ med }}</li>
-        </ul>
-      </div>
+      <fieldset><legend>藥敏或分子檢測結果</legend><div class="opts">
+        <label class="opt"><span style="flex:1">Clarithromycin<br><select name="astClari" style="width:100%;min-height:36px;font:inherit;margin-top:4px"><option value="unknown">未做或不明</option><option value="S">敏感</option><option value="R">抗藥</option></select></span></label>
+        <label class="opt"><span style="flex:1">Levofloxacin<br><select name="astLevo" style="width:100%;min-height:36px;font:inherit;margin-top:4px"><option value="unknown">未做或不明</option><option value="S">敏感</option><option value="R">抗藥</option></select></span></label>
+      </div></fieldset>
 
-      <div class="grid grid-cols-2 gap-4">
-        <div class="bg-white rounded-lg p-3 border border-green-200">
-          <div class="text-xs text-gray-500 font-bold uppercase">療程天數</div>
-          <div class="text-lg font-bold text-gray-800">{{ recommendation.duration }}</div>
-        </div>
-        <div class="bg-white rounded-lg p-3 border border-green-200">
-          <div class="text-xs text-gray-500 font-bold uppercase">預估除菌率</div>
-          <div class="text-lg font-bold text-gray-800">{{ recommendation.prognosis }}</div>
-        </div>
-      </div>
-
-      <div v-if="recommendation.note" class="mt-4 text-sm text-gray-600 bg-yellow-50 border border-yellow-200 p-3 rounded">
-        <strong>💡 臨床提醒：</strong> {{ recommendation.note }}
-      </div>
-    </div>
-    
+      <fieldset style="margin-bottom:0"><legend>其他條件（可複選）</legend><div class="opts">
+        <label class="opt"><input type="checkbox" name="bqtOff"><span>BQT 不可行（缺藥、禁忌或無法耐受）</span></label>
+        <label class="opt"><input type="checkbox" name="alarm"><span>有警示症狀，或胃癌一等親家族史</span></label>
+        <label class="opt"><input type="checkbox" name="special"><span>懷孕、哺乳或兒童</span></label>
+      </div></fieldset>
+    </form>
   </div>
+  <div id="result" aria-live="polite"></div>
+</section>
 
-  <script>
-    const { createApp, ref, computed } = Vue;
+<section id="cases" role="tabpanel" aria-labelledby="t-cases" hidden></section>
+<section id="quiz" role="tabpanel" aria-labelledby="t-quiz" hidden></section>
+<section id="map" role="tabpanel" aria-labelledby="t-map" hidden></section>
+<section id="ref" role="tabpanel" aria-labelledby="t-ref" hidden></section>
+</main>
+<footer>臨床決策輔助工具，不取代醫師判斷。實際處方請依病人肝腎功能、併用藥、院內藥品與健保規定調整。所有運算都在瀏覽器內完成，不儲存也不傳送資料。</footer>
+</div>
 
-    createApp({
-      setup() {
-        const formData = ref({
-          line: 'first',
-          allergy: 'no',
-          resistance: 'high',
-          prevFailed: 'triple'
-        });
+<script>
+/*ENGINE-START*/
+var HP = (function () {
+  var PPI = 'PPI 標準劑量，每日 2 次';
+  var BIS = 'Bismuth subcitrate 120–300 mg，每日 4 次';
+  var TET = 'Tetracycline 500 mg，每日 4 次（不以 Doxycycline 取代）';
+  var MET = 'Metronidazole 500 mg，每日 3–4 次';
+  var R = {
+    BQT: { title: '鉍劑四合一（BQT）', meds: [PPI, BIS, TET, MET], duration: '14 天', data: '台灣多中心 RCT 90.4%（同試驗 concomitant 85.9%、三合一 83.7%，Taipei II 引述）；美國回溯研究 85–87%（G&H 2026）',
+      safety: 'Metronidazole 服藥期間避免飲酒；Tetracycline 與含鈣、鎂、鐵製劑分開服用；鉍劑可使糞便變黑。服藥次數多，請先說明遵從性的重要。' },
+    VA: { title: 'Vonoprazan + Amoxicillin 雙重療法', meds: ['Vonoprazan 20 mg，每日 2 次', 'Amoxicillin 1000 mg，每日 3 次'], duration: '14 天', data: 'PHALCON-HP 77%（G&H 2026）；另一 RCT 96.0%（Taipei II 引述）。族群不同，不宜直接比較。',
+      safety: '含 Amoxicillin。請先確認院內是否有 Vonoprazan 及其健保給付條件。' },
+    TRIPLE: { title: 'Clarithromycin 三合一', meds: [PPI, 'Clarithromycin 500 mg，每日 2 次', 'Amoxicillin 1000 mg，每日 2 次'], duration: '14 天', data: '台灣多中心 RCT 83.7%（Taipei II 引述）',
+      safety: '含 Amoxicillin。Clarithromycin 與部分 statin、colchicine 等藥物有交互作用，且可能延長 QT。' },
+    CONCOMITANT: { title: 'Concomitant 非鉍劑四合一', meds: [PPI, 'Clarithromycin 500 mg，每日 2 次', 'Amoxicillin 1000 mg，每日 2 次', 'Metronidazole 500 mg，每日 2 次'], duration: '14 天', data: '台灣多中心 RCT 85.9%（Taipei II 引述）',
+      safety: '含 Amoxicillin。劑量為常用劑量，所讀指引段落未逐項列出。' },
+    RIF: { title: 'Rifabutin 三合一', meds: ['PPI 標準至雙倍劑量，每日 2 次', 'Amoxicillin 1000 mg，每日 2–3 次', 'Rifabutin 150 mg，每日 2 次（學名藥建議用法）；複方 Talicia 為 50 mg，每日 3 次'], duration: '14 天', data: '本頁未讀到可引用的除菌率',
+      safety: '含 Amoxicillin。請注意骨髓抑制與藥物交互作用，並確認院內是否有此藥。' },
+    LEVO_T: { title: 'Levofloxacin 三合一', meds: [PPI, 'Levofloxacin 500 mg，每日 1 次', 'Amoxicillin 1000 mg，每日 2 次'], duration: '14 天', data: '近期研究常低於 80%（Taipei II）；台灣初治菌株抗藥性約 28.7%',
+      safety: '含 Amoxicillin。FDA 警示肌腱炎與肌腱斷裂，年齡 >60 歲、器官移植或使用類固醇者風險較高。' },
+    LEVO_M: { title: 'Levofloxacin + Metronidazole 三合一', meds: [PPI, 'Levofloxacin 500 mg，每日 1 次', 'Metronidazole 500 mg，每日 2 次'], duration: '14 天', data: '本頁未讀到過敏族群的除菌率',
+      safety: 'FDA 警示肌腱炎與肌腱斷裂，年齡 >60 歲、器官移植或使用類固醇者風險較高。' },
+    LBQ: { title: 'Levofloxacin 鉍劑四合一', meds: [PPI, 'Levofloxacin 500 mg，每日 1 次', 'Amoxicillin 1000 mg，每日 2 次', 'Bismuth，每日 4 次'], duration: '至少 10 天（Maastricht VI）', data: 'Maastricht VI 引述網絡統合分析，為二線最有效的處方之一',
+      safety: '含 Amoxicillin。FDA 警示肌腱炎與肌腱斷裂。藥敏不明時，ACG 不建議使用。' },
+    HDDT: { title: '高劑量 PPI + Amoxicillin 雙重療法', meds: ['PPI 每日 4 次', 'Amoxicillin 750 mg，每日 4 次'], duration: '14 天', data: '本頁未讀到可引用的除菌率。劑量沿用原頁，未重新核對原始試驗。',
+      safety: '含 Amoxicillin。ACG 認為北美證據不足以推薦作為救援處方；Maastricht VI 列為可能選項。' },
+    PCM: { title: 'PPI + Clarithromycin + Metronidazole', meds: [PPI, 'Clarithromycin 500 mg，每日 2 次', 'Metronidazole 500 mg，每日 2 次'], duration: '14 天', data: '本頁未讀到可引用的除菌率',
+      safety: '僅限藥敏證實 Clarithromycin 敏感時使用。注意 Clarithromycin 的交互作用與 QT。' },
+    PCAB_NOAMOX: { title: '不含 Amoxicillin 的 P-CAB 雙重療法', meds: ['Vonoprazan + Tetracycline，或 Vonoprazan + Minocycline（劑量請查原始試驗）'], duration: '依原始試驗', data: 'Vonoprazan + Tetracycline 92.0–94.5%；Vonoprazan + Minocycline ITT 90.9%（Taipei II 引述）',
+      safety: 'Taipei II 列為 BQT 禁忌、缺藥或無法耐受時的替代方案。本頁未讀原始試驗，因此不列劑量。' }
+  };
 
-        const recommendation = computed(() => {
-          const { line, allergy, resistance, prevFailed } = formData.value;
+  var DEFAULTS = { line: 'first', allergy: 'none', resistance: 'high', macrolide: false, astClari: 'unknown', astLevo: 'unknown', fails: 1, clari: false, levo: false, bqt: false, rif: false, dual: false, bqtOff: false, alarm: false, special: false };
 
-          if (line === 'first') {
-            if (allergy === 'yes') {
-              return {
-                title: '四合一鉍劑療法 (Bismuth Quadruple Therapy, BQT)',
-                medications: [
-                  'PPI (標準劑量) 一天兩次 (BID)',
-                  'Bismuth subcitrate 120mg 一天四次 (QID)',
-                  'Tetracycline 500mg 一天四次 (QID)',
-                  'Metronidazole 500mg 一天三次或四次 (TID/QID)'
-                ],
-                duration: '14 天',
-                prognosis: '≥ 90%',
-                note: '患者有盤尼西林過敏，避用 Amoxicillin。若取得鉍劑困難，臨床上可能會調整為含 Levofloxacin 的處方，但抗藥性風險較高。'
-              };
-            } else {
-              if (resistance === 'high') {
-                return {
-                  title: '四合一鉍劑療法 (BQT) 或 P-CAB 雙重療法',
-                  medications: [
-                    'PPI (標準劑量) 一天兩次 (BID)',
-                    'Bismuth subcitrate 120mg 一天四次 (QID)',
-                    'Tetracycline 500mg 一天四次 (QID)',
-                    'Metronidazole 500mg 一天三/四次 (TID/QID)'
-                  ],
-                  duration: '14 天',
-                  prognosis: '90 - 95%',
-                  note: 'Clarithromycin 抗藥性高地區的首選為 BQT。近年來，以新型鉀離子競爭性酸阻斷劑 (P-CAB, 如 Vonoprazan) 搭配 Amoxicillin 的雙重療法也成為強效的替代方案。'
-                };
-              } else {
-                return {
-                  title: '標準三合一療法 (Standard Triple Therapy)',
-                  medications: [
-                    'PPI (標準劑量) 一天兩次 (BID)',
-                    'Clarithromycin 500mg 一天兩次 (BID)',
-                    'Amoxicillin 1000mg 一天兩次 (BID)'
-                  ],
-                  duration: '14 天',
-                  prognosis: '80 - 85%',
-                  note: '僅適用於確認 Clarithromycin 抗藥性低於 15% 的地區。為提高成功率，療程必須維持 14 天。'
-                };
-              }
-            }
-          } else {
-            // Second-line (Rescue)
-            if (allergy === 'yes') {
-              return {
-                title: 'Levofloxacin 救援療法 (不含 Amoxicillin)',
-                medications: [
-                  'PPI (標準劑量) 一天兩次 (BID)',
-                  'Levofloxacin 500mg 一天一次 (QD)',
-                  'Tetracycline 500mg 或 Bismuth (依據醫師經驗組合)'
-                ],
-                duration: '14 天',
-                prognosis: '75 - 85%',
-                note: '盤尼西林過敏者的救援選擇受限，若先前未使用過鉍劑，強烈建議直接改用完整 BQT 療法。'
-              };
-            } else {
-              if (prevFailed === 'triple') {
-                return {
-                  title: '四合一鉍劑療法 (Bismuth Quadruple Therapy, BQT)',
-                  medications: [
-                    'PPI (標準劑量) 一天兩次 (BID)',
-                    'Bismuth subcitrate 120mg 一天四次 (QID)',
-                    'Tetracycline 500mg 一天四次 (QID)',
-                    'Metronidazole 500mg 一天三/四次 (TID/QID)'
-                  ],
-                  duration: '14 天',
-                  prognosis: '≥ 90%',
-                  note: '首次使用 Clarithromycin 失敗後，BQT 為指引強烈建議的標準救援處方。'
-                };
-              } else {
-                return {
-                  title: 'Levofloxacin 三合一 或 HDDT (高劑量雙重療法)',
-                  medications: [
-                    '【選擇 A】PPI BID + Levofloxacin 500mg QD + Amoxicillin 1g BID',
-                    '【選擇 B】PPI QID + Amoxicillin 750mg QID (HDDT)'
-                  ],
-                  duration: '14 天',
-                  prognosis: '80 - 85%',
-                  note: '若先前 BQT 失敗，救援處方可選擇含 Levofloxacin 的處方，或透過提升胃內 pH 值的高劑量雙重療法 (HDDT) / P-CAB 療法。'
-                };
-              }
-            }
-          }
-        });
+  function alt(key, when) { return { key: key, title: R[key].title, meds: R[key].meds, duration: R[key].duration, when: when, safety: R[key].safety }; }
 
-        return { formData, recommendation };
+  function recommend(input) {
+    var i = {}, k;
+    for (k in DEFAULTS) i[k] = (input && input[k] !== undefined) ? input[k] : DEFAULTS[k];
+    var allergic = i.allergy !== 'none';
+    var alerts = [], notes = [], alts = [], views = [], main = null, status = 'rx', referTitle = '', referSteps = [];
+
+    if (i.alarm) alerts.push({ level: 'red', text: '有警示症狀或胃癌一等親家族史：建議先安排上消化道內視鏡，再決定除菌處方（Taipei II Q21）。' });
+    if (i.allergy === 'reported') notes.push('自述過敏約占 10%，真正 IgE 媒介者少於 1%。評估前先比照過敏處理；過敏檢測陰性後即可使用盤尼西林類藥物（Maastricht VI、Taipei II）。');
+    if (i.allergy === 'confirmed') notes.push('已確認過敏：Rifabutin 三合一與 Vonoprazan 雙重療法都含 Amoxicillin，不可使用（ACG 2024）。');
+
+    if (i.special) {
+      return finish({ status: 'defer', title: '本工具不提供處方：請個別評估', meds: [], duration: '—', data: '—', safety: '', referSteps: ['懷孕、哺乳或兒童的用藥限制不同（例如 Tetracycline、Levofloxacin），本工具未涵蓋。', '請會診相關專科，依適應症與用藥安全決定是否及何時除菌。'] }, [], alerts, notes, views, i);
+    }
+
+    if (i.line === 'first') {
+      var clariUsable = i.astClari === 'S' || (i.resistance === 'low' && !i.macrolide && i.astClari !== 'R');
+      if (i.bqtOff) {
+        if (allergic) {
+          status = 'refer'; referTitle = 'BQT 不可行且盤尼西林過敏：先做過敏評估與藥敏檢測';
+          referSteps = ['安排盤尼西林過敏檢測；無嚴重反應史者可考慮減敏（Taipei II）。', '可行時安排藥敏或分子檢測。', '再依結果選擇處方，不以 Levofloxacin 作為經驗性第一線。'];
+          alts.push(alt('PCAB_NOAMOX', 'Taipei II 列為不含 Amoxicillin 的替代方案。'));
+          if (clariUsable) alts.push(alt('PCM', '僅限低抗藥性或藥敏敏感，且無巨環類暴露史。'));
+        } else if (i.astClari === 'S') {
+          main = 'TRIPLE'; alts.push(alt('VA', '不受 Clarithromycin 抗藥性影響。'));
+        } else {
+          main = 'VA';
+          if (i.astClari !== 'R' && !i.macrolide) alts.push(alt('CONCOMITANT', 'Maastricht VI：BQT 不可得時可考慮。'));
+          alts.push(alt('RIF', 'ACG 2024 的經驗性替代方案（條件式建議）。'));
+        }
+      } else if (allergic) {
+        main = 'BQT';
+      } else if (i.astClari === 'S') {
+        main = 'TRIPLE'; alts.push(alt('BQT', '指引的經驗性首選，也可直接使用。')); alts.push(alt('VA', '不受 Clarithromycin 抗藥性影響。'));
+      } else {
+        main = 'BQT'; alts.push(alt('VA', 'ACG 2024 條件式建議；Taipei II 列為替代方案。')); alts.push(alt('RIF', 'ACG 2024 條件式建議（證據品質低）。'));
+        if (clariUsable) alts.push(alt('TRIPLE', 'Maastricht VI：低抗藥性且當地證實 ≥90% 時仍可使用。ACG 2024 則要求先有藥敏結果。'));
       }
-    }).mount('#app');
-  </script>
-  <style>
-    .animate-fade-in { animation: fadeIn 0.3s ease-in-out; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
-  </style>
+      notes.push('第一線不經驗性使用 Levofloxacin（Taipei II Q17、Maastricht VI）。');
+      views = [
+        { g: 'ACG 2024', t: 'BQT 14 天為首選；Rifabutin 三合一或 P-CAB 雙重為條件式替代。Clarithromycin 需先有藥敏結果。' },
+        { g: 'Maastricht VI', t: '高或不明抗藥性首選 BQT；不可得時考慮 concomitant。低抗藥性且當地證實 ≥90% 時，三合一仍可用。' },
+        { g: 'Taipei II', t: 'BQT 為經驗性首選，P-CAB 療法為替代。過敏者首選 BQT。' }
+      ];
+    } else {
+      var clariS = !i.clari && i.astClari === 'S';
+      var levoOK = !i.levo && i.astLevo !== 'R';
+      var levoS = levoOK && i.astLevo === 'S';
+      var bqtUsable = !i.bqtOff && !i.bqt;
+
+      if (i.fails >= 2) alerts.push({ level: 'amb', text: '已失敗 2 次以上：建議優先安排藥敏或分子檢測，再選下一個處方。' });
+      if (!i.clari && !i.levo && !i.bqt && !i.rif && !i.dual) alerts.push({ level: 'amb', text: '尚未勾選曾用過的處方。請先查明用藥史，否則可能重複使用已失敗的抗生素。' });
+      notes.push('Clarithromycin 與 Levofloxacin 不重複使用（Taipei II Q19）。也請先確認前次失敗是否與遵從性有關。');
+
+      if (bqtUsable) {
+        main = 'BQT';
+        if (allergic) { if (levoS) alts.push(alt('LEVO_M', '藥敏證實 Levofloxacin 敏感時可考慮。')); }
+        else if (levoS) alts.push(alt('LEVO_T', '藥敏證實敏感時的替代方案。'));
+        else if (levoOK) alts.push(alt('LEVO_T', '指引不一致：Maastricht VI 接受；ACG 2024 要求先有藥敏。台灣抗藥性約 28.7%，建議先檢測。'));
+      } else if (allergic) {
+        if (levoS) { main = 'LEVO_M'; }
+        else if (clariS) { main = 'PCM'; }
+        else {
+          status = 'refer'; referTitle = '過敏且無法再用 BQT：先做過敏評估與藥敏檢測';
+          referSteps = ['安排盤尼西林過敏檢測；陰性後可使用含 Amoxicillin 的救援處方。', '安排藥敏或分子檢測，再選擇敏感藥物。', 'Maastricht VI 建議不重複已失敗的處方。'];
+        }
+        alts.push(alt('PCAB_NOAMOX', 'Taipei II 列為不含 Amoxicillin 的替代方案。'));
+      } else {
+        if (levoS) main = 'LEVO_T';
+        else if (clariS) main = 'TRIPLE';
+        else if (!i.rif) main = 'RIF';
+        else if (!i.dual) main = 'HDDT';
+        else if (levoOK) main = 'LBQ';
+        else {
+          status = 'refer'; referTitle = '可用的經驗性處方已用盡：請轉介專科並安排藥敏檢測';
+          referSteps = ['安排藥敏或分子檢測。', '由消化專科依結果設計處方。'];
+        }
+        if (main !== 'RIF' && !i.rif) alts.push(alt('RIF', 'ACG 2024：BQT 後的經驗性替代方案。'));
+        if (main !== 'LBQ' && main !== 'LEVO_T' && levoOK) alts.push(alt('LBQ', 'Maastricht VI 列為選項；藥敏不明時 ACG 2024 不建議。'));
+        if (main !== 'HDDT' && !i.dual) alts.push(alt('HDDT', 'Maastricht VI 列為選項；ACG 2024 認為證據不足。'));
+      }
+      if (i.clari && i.levo && !i.bqt && !i.bqtOff) notes.push('Maastricht VI：BQT 不受 Clarithromycin 與 Fluoroquinolone 抗藥性影響，可作為第三線。');
+      views = [
+        { g: 'ACG 2024', t: '未用過 BQT 者用 BQT；用過者以 Rifabutin 三合一為經驗性替代。Clarithromycin 或 Levofloxacin 必須先有藥敏結果。' },
+        { g: 'Maastricht VI', t: '三合一失敗後，Levofloxacin 救援至少與 BQT 同樣有效；高喹諾酮抗藥性時以 BQT 為主。BQT 失敗後不重複，可用 Levofloxacin 四合一、高劑量雙重或 Rifabutin。' },
+        { g: 'Taipei II', t: '不重複使用 Clarithromycin 或 Levofloxacin；依當地療效、抗藥性或藥敏選擇。Levofloxacin 保留給救援，最好有藥敏依據。' }
+      ];
+    }
+
+    var res;
+    if (status === 'refer') res = { status: 'refer', title: referTitle, meds: [], duration: '—', data: '—', safety: '', referSteps: referSteps };
+    else res = { status: 'rx', key: main, title: R[main].title, meds: R[main].meds, duration: R[main].duration, data: R[main].data, safety: R[main].safety, referSteps: [] };
+    return finish(res, alts, alerts, notes, views, i);
+  }
+
+  function finish(res, alts, alerts, notes, views, i) {
+    res.alts = alts; res.alerts = alerts; res.notes = notes; res.views = views;
+    res.toc = TOC;
+    return res;
+  }
+
+  var TOC = [
+    '所有病人都要確認除菌：療程結束後 4–6 週，以尿素呼氣或糞便抗原檢測（ACG 2024、Maastricht VI、Taipei II）。',
+    '檢測前：抗生素與鉍劑停用至少 4 週，PPI 停用 14 天；症狀可用 H2 阻斷劑或制酸劑（Maastricht VI）。',
+    'P-CAB 的停藥天數在所讀指引中未見明確建議；本工具假設至少比照 PPI。',
+    '血清抗體不能用來判定除菌成功（Maastricht VI）。'
+  ];
+
+  return { recommend: recommend, REG: R, DEFAULTS: DEFAULTS, TOC: TOC };
+})();
+if (typeof module !== 'undefined') module.exports = HP;
+/*ENGINE-END*/
+</script>
+
+<script>
+/*TEACH-START*/
+var TEACH = {
+  CASES: [
+    { id: 'c1', title: '病例 1：十二指腸潰瘍，初次除菌', stem: '52 歲男性，上腹痛。內視鏡見十二指腸潰瘍，切片確認 H. pylori 陽性。無藥物過敏，也不記得近期用過抗生素。',
+      data: [['階段', '第一線'], ['過敏', '無'], ['藥敏', '未做']],
+      input: { line: 'first', allergy: 'none', resistance: 'high' }, expect: 'BQT',
+      think: ['藥敏不明時，三份指引都以 BQT 為首選（ACG、Maastricht VI 為 14 天；Taipei II 為 10–14 天）。', '台灣 Clarithromycin 抗藥性 13.7–24.3%，不宜直接用三合一。', '衛教時先講清楚：每日多次服藥、糞便變黑、避免飲酒。'],
+      pitfall: '療程結束 2 週就在服用 PPI 下驗呼氣，結果陰性：這可能是偽陰性。應停 PPI 14 天，且在療程結束 4–6 週後再驗。' },
+    { id: 'c2', title: '病例 2：自述盤尼西林過敏', stem: '45 歲女性，功能性消化不良評估時糞便抗原陽性。自述小時候吃盤尼西林起過疹子，細節不清楚，從未做過檢測。',
+      data: [['階段', '第一線'], ['過敏', '自述，未驗證'], ['藥敏', '未做']],
+      input: { line: 'first', allergy: 'reported', resistance: 'high' }, expect: 'BQT',
+      think: ['BQT 不含盤尼西林，本來就是過敏者的首選。', '自述過敏約 10%，真正 IgE 媒介者少於 1%，值得安排評估。', '過敏標籤解除後，日後救援選項會多很多。'],
+      pitfall: '因為過敏就改用經驗性 Levofloxacin：這不是第一線選擇，抗藥性與安全性都有疑慮。' },
+    { id: 'c3', title: '病例 3：Clarithromycin 三合一失敗', stem: '58 歲男性，兩年前接受 Clarithromycin 三合一 14 天，遵從性良好。呼氣檢查仍為陽性。無過敏，未做藥敏。',
+      data: [['階段', '救援，第 1 次失敗'], ['曾用', '含 Clarithromycin'], ['藥敏', '未做']],
+      input: { line: 'rescue', allergy: 'none', fails: 1, clari: true }, expect: 'BQT',
+      think: ['不重複使用 Clarithromycin。', '未用過 BQT，ACG 2024 建議用 BQT。', '指引在此不一致：Maastricht VI 認為 Levofloxacin 救援至少同樣有效；但台灣抗藥性約 28.7%，本工具建議先檢測。'],
+      pitfall: '只因為「換了藥」就直接開 Levofloxacin。沒有藥敏時，ACG 2024 不建議這麼做。' },
+    { id: 'c4', title: '病例 4：三合一與 BQT 都失敗，正在用類固醇', stem: '66 歲女性，類風濕性關節炎，長期服用 prednisolone。已先後接受 Clarithromycin 三合一與 BQT，都確實服完，仍為陽性。無過敏，當地無法做藥敏。',
+      data: [['階段', '救援，第 2 次失敗'], ['曾用', 'Clarithromycin、BQT'], ['風險', '>60 歲且用類固醇']],
+      input: { line: 'rescue', allergy: 'none', fails: 2, clari: true, bqt: true }, expect: 'RIF',
+      think: ['BQT 已失敗，Maastricht VI 建議不重複。', 'ACG 2024 以 Rifabutin 三合一為經驗性替代，並需注意骨髓抑制。', '年齡 >60 歲加上類固醇，是 Levofloxacin 肌腱斷裂的高風險族群。'],
+      pitfall: '高劑量雙重療法並非不能用，但 ACG 2024 認為北美證據不足。使用前請參考當地療效。' },
+    { id: 'c5', title: '病例 5：確認過敏，BQT 失敗，藥敏已知', stem: '49 歲男性，有 Amoxicillin 過敏性休克病史。BQT 失敗後做分子檢測：Clarithromycin 抗藥，Levofloxacin 敏感。',
+      data: [['階段', '救援，第 1 次失敗'], ['過敏', '已確認（過敏性休克）'], ['藥敏', 'Clarithromycin 抗藥；Levofloxacin 敏感']],
+      input: { line: 'rescue', allergy: 'confirmed', fails: 1, bqt: true, astClari: 'R', astLevo: 'S' }, expect: 'LEVO_M',
+      think: ['不可使用 Amoxicillin，因此 Rifabutin 三合一和 Vonoprazan 雙重都排除。', '藥敏支持 Levofloxacin，第三個藥改用 Metronidazole。', '有過敏性休克史，不適合貿然減敏。'],
+      pitfall: '只看藥敏敏感就開標準 Levofloxacin 三合一：標準組合含 Amoxicillin。' },
+    { id: 'c6', title: '病例 6：缺鐵性貧血、胃癌家族史，加上 BQT 缺藥', stem: '40 歲女性，缺鐵性貧血，母親有胃癌病史，糞便抗原陽性。院內 Tetracycline 缺藥。無過敏，未做藥敏。',
+      data: [['階段', '第一線'], ['警示', '缺鐵性貧血、一等親胃癌'], ['限制', 'BQT 不可行']],
+      input: { line: 'first', allergy: 'none', bqtOff: true, alarm: true }, expect: 'VA',
+      think: ['先安排內視鏡：缺鐵性貧血是警示徵象，且有一等親胃癌家族史。', 'ACG 2024 不建議以 Doxycycline 取代 Tetracycline。', 'BQT 不可行且無過敏時，Vonoprazan + Amoxicillin 是合理替代，並須確認院內可取得。'],
+      pitfall: '只處理感染、未做內視鏡，可能延誤胃癌診斷。' }
+  ],
+  QUIZ: [
+    { lv: 'b', q: '藥敏不明的初次除菌，三份指引共同的首選是？', o: ['BQT 14 天', 'Clarithromycin 三合一 7 天', 'Levofloxacin 三合一 10 天', 'Amoxicillin 單藥 14 天'], a: 0, why: 'ACG 2024、Maastricht VI 與 Taipei II 都以 BQT 為藥敏不明時的首選。療程上，前兩者為 14 天，Taipei II 為 10–14 天。' },
+    { lv: 'b', q: 'ACG 2024 的 optimized BQT 中，Metronidazole 劑量是？', o: ['250 mg，每日 2 次', '250 mg，每日 4 次', '500 mg，每日 3–4 次', '1000 mg，每日 1 次'], a: 2, why: 'Optimized BQT 使用 Metronidazole 500 mg，每日 3–4 次，共 14 天。' },
+    { lv: 'b', q: 'Tetracycline 缺藥時，可否改用 Doxycycline？', o: ['可以，療效相同', '不建議替換', '可以，但療程要加倍', '可以，但要併用 Rifabutin'], a: 1, why: 'ACG 2024 不建議以 Doxycycline 取代 Tetracycline。' },
+    { lv: 'b', q: '除菌後應在什麼時候確認結果？', o: ['療程結束隔天', '療程結束後 1 週', '療程結束後 2 週', '療程結束後 4–6 週'], a: 3, why: 'Maastricht VI 與 Taipei II 建議 4–6 週；ACG 2024 為至少 4 週。' },
+    { lv: 'b', q: '尿素呼氣檢查前，PPI 應停用多久？', o: ['不必停', '3 天', '14 天', '8 週'], a: 2, why: 'Maastricht VI：PPI 停用 14 天，抗生素與鉍劑停用至少 4 週。' },
+    { lv: 'b', q: '下列哪一項不能用來判定除菌成功？', o: ['血清抗體', '尿素呼氣檢查', '單株糞便抗原', '胃切片組織學'], a: 0, why: 'Maastricht VI：血清學不能用於判定除菌成功。' },
+    { lv: 'b', q: '盤尼西林過敏者的第一線首選是？', o: ['Vonoprazan + Amoxicillin', 'BQT', 'Rifabutin 三合一', 'Clarithromycin 三合一'], a: 1, why: 'BQT 不含盤尼西林。其餘三者都含 Amoxicillin。' },
+    { lv: 'b', q: '自述盤尼西林過敏約占 10%，真正 IgE 媒介者比例約為？', o: ['少於 1%', '約 5%', '約 10%', '超過 25%'], a: 0, why: 'Taipei II：約 10% 自述過敏，真正 IgE 媒介者少於 1%。' },
+    { lv: 'b', q: 'Vonoprazan 雙重療法中，Amoxicillin 的用法是？', o: ['500 mg，每日 1 次', '1000 mg，每日 1 次', '500 mg，每日 2 次', '1000 mg，每日 3 次'], a: 3, why: 'Vonoprazan 20 mg 每日 2 次，加 Amoxicillin 1000 mg 每日 3 次，共 14 天。' },
+    { lv: 'b', q: 'Taipei II 指出救援時不應重複使用哪兩種抗生素？', o: ['Amoxicillin 與 Tetracycline', 'Clarithromycin 與 Levofloxacin', 'Tetracycline 與 Rifabutin', 'Amoxicillin 與 Rifabutin'], a: 1, why: 'Taipei II Q19：Clarithromycin 或 Levofloxacin 不應在救援時重複使用。' },
+    { lv: 'a', q: 'Clarithromycin 三合一失敗、藥敏不明時，ACG 2024 與 Maastricht VI 的差異是？', o: ['兩者都禁用 BQT', 'ACG 要求 Levofloxacin 先有藥敏，Maastricht 接受', '兩者都要求重複三合一', 'ACG 首選 Levofloxacin，Maastricht 反對任何 Levofloxacin 救援'], a: 1, why: 'ACG 只在藥敏確認後用 Levofloxacin；Maastricht VI 認為 Levofloxacin 救援至少與 BQT 同樣有效。' },
+    { lv: 'a', q: '台灣 2019–2024 初治菌株資料中，抗藥性明顯下降的是？', o: ['Tetracycline', 'Clarithromycin', 'Levofloxacin', 'Metronidazole'], a: 3, why: 'Metronidazole 從 35.5% 降到 13.0%；Tetracycline 從 0% 升到 3.5%。此數據引自 WJG 社論對 1408 株研究的轉述。' },
+    { lv: 'a', q: 'Optimized BQT 失敗、藥敏不明且無過敏時，ACG 2024 的經驗性替代是？', o: ['重複 BQT', 'Levofloxacin 三合一', 'Rifabutin 三合一', 'Clarithromycin 三合一'], a: 2, why: 'ACG 2024：用過 optimized BQT 者，Rifabutin 三合一 14 天為合適的經驗性替代。' },
+    { lv: 'a', q: '確認過敏、BQT 失敗，藥敏顯示 Levofloxacin 敏感，較合適的組合是？', o: ['PPI + Levofloxacin + Metronidazole', 'PPI + Levofloxacin + Amoxicillin', 'Vonoprazan + Amoxicillin', 'Rifabutin + Amoxicillin + PPI'], a: 0, why: 'ACG 表列 Levofloxacin 三合一的第三藥可為 Amoxicillin 或 Metronidazole，過敏者應選 Metronidazole。' },
+    { lv: 'a', q: '哪位病人使用 Levofloxacin 的肌腱風險特別需要注意？', o: ['25 歲，無共病', '35 歲，有高血脂', '68 歲，正在用類固醇', '45 歲，有胃食道逆流'], a: 2, why: 'Taipei II：FDA 警示在 >60 歲、器官移植與使用類固醇者風險較高。' },
+    { lv: 'a', q: 'Rifabutin 三合一不能用於確認過敏者，主要原因是？', o: ['Rifabutin 與盤尼西林交叉過敏', '含有 Amoxicillin', '含有鉍劑', '必須併用 Clarithromycin'], a: 1, why: 'Rifabutin 三合一與 Vonoprazan 雙重療法都含 Amoxicillin。' },
+    { lv: 'a', q: 'Maastricht VI 允許第一線用 Clarithromycin 三合一的條件是？', o: ['病人偏好較短療程，且願意配合追蹤', '當地抗藥性不明', '曾用過巨環類', '低抗藥性且當地證實 ≥90%'], a: 3, why: 'Maastricht VI：低抗藥性且當地療效證實 ≥90% 時才可使用。ACG 2024 則要求先有藥敏。' },
+    { lv: 'a', q: '過敏者考慮 Vonoprazan + Clarithromycin + Metronidazole 時，哪種情況應避免？', o: ['曾使用巨環類', '年齡大於 40 歲', '有胃潰瘍病史', '曾做過內視鏡'], a: 0, why: 'Taipei II：高 Clarithromycin 抗藥性地區或有巨環類暴露史者應避免。' },
+    { lv: 'a', q: '40 歲女性，缺鐵性貧血、母親有胃癌，H. pylori 陽性。下一步優先考慮？', o: ['血清抗體追蹤', '只開除菌藥', '一年後再驗', '先安排內視鏡'], a: 3, why: 'Taipei II Q21：有警示徵象或胃癌高風險者建議內視鏡。缺鐵性貧血屬於警示徵象。' },
+    { lv: 'a', q: '療程結束 2 週、仍服 PPI 時呼氣檢查陰性，最合適的解讀是？', o: ['確定除菌成功，之後不必再追蹤', '應立即再次除菌', '可能偽陰性，須停藥後再驗', '改驗血清抗體即可'], a: 2, why: '時間太早又未停 PPI，可能偽陰性。應停 PPI 14 天，並於療程結束 4–6 週後再驗。' }
+  ],
+  MAP: [
+    { c: '#7c3aed', t: '何時檢測與內視鏡', i: ['UBT 或單株糞便抗原為優先', '警示症狀、胃癌家族史：內視鏡', '根除可降低胃癌風險'] },
+    { c: '#2563eb', t: '第一線', i: ['藥敏不明：BQT 14 天', '替代：Vonoprazan 雙重、Rifabutin 三合一', 'Clarithromycin：需藥敏或當地證實 ≥90%', '不經驗性使用 Levofloxacin'] },
+    { c: '#db2777', t: '盤尼西林過敏', i: ['首選 BQT', '自述者安排過敏評估', '不可用含 Amoxicillin 的處方', '替代：不含 Amoxicillin 的 P-CAB 療法'] },
+    { c: '#ea580c', t: '救援', i: ['不重複 Clarithromycin、Levofloxacin', '未用過 BQT：BQT', '用過 BQT：Rifabutin；藥敏敏感可用 Levofloxacin', '失敗 2 次以上：先做藥敏'] },
+    { c: '#0d9488', t: '確認除菌', i: ['結束後 4–6 週', '抗生素、鉍劑停 4 週；PPI 停 14 天', '血清抗體不適用', '仍陽性：提供救援'] },
+    { c: '#15803d', t: '台灣抗藥性 2019–2024', i: ['Clarithromycin 13.7–24.3%', 'Levofloxacin 約 28.7%', 'Metronidazole 35.5% → 13.0%', 'Tetracycline 0% → 3.5%'] },
+    { c: '#b45309', t: '用藥安全', i: ['Levofloxacin：肌腱風險', 'Clarithromycin：交互作用、QT', 'Rifabutin：骨髓抑制', '不以 Doxycycline 取代 Tetracycline'] }
+  ]
+};
+if (typeof module !== 'undefined') module.exports = TEACH;
+/*TEACH-END*/
+</script>
+
+<script>
+(function () {
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+  var form = $('#form');
+  var CHECKS = ['macrolide', 'clari', 'levo', 'bqt', 'rif', 'dual', 'bqtOff', 'alarm', 'special'];
+
+  function writeForm(s) {
+    ['line', 'allergy', 'resistance', 'fails'].forEach(function (n) {
+      $$('input[name=' + n + ']', form).forEach(function (el) { el.checked = String(s[n]) === el.value; });
+    });
+    CHECKS.forEach(function (n) { form.elements[n].checked = !!s[n]; });
+    form.elements.astClari.value = s.astClari;
+    form.elements.astLevo.value = s.astLevo;
+  }
+  function readForm() {
+    var s = {};
+    ['line', 'allergy', 'resistance', 'fails'].forEach(function (n) {
+      var el = $('input[name=' + n + ']:checked', form);
+      s[n] = el ? el.value : HP.DEFAULTS[n];
+    });
+    s.fails = Number(s.fails);
+    CHECKS.forEach(function (n) { s[n] = form.elements[n].checked; });
+    s.astClari = form.elements.astClari.value;
+    s.astLevo = form.elements.astLevo.value;
+    return s;
+  }
+  function list(a) { return '<ul>' + a.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>'; }
+
+  function render() {
+    var s = readForm();
+    var first = s.line === 'first';
+    $('#fsRes').hidden = !first;
+    $('#fsMac').hidden = !first;
+    $('#fsFails').hidden = first;
+    $('#fsPrior').hidden = first;
+    var r = HP.recommend(s);
+    var h = '';
+    r.alerts.forEach(function (a) { h += '<div class="alert ' + (a.level === 'red' ? 'red' : 'amb') + '" role="alert">' + esc(a.text) + '</div>'; });
+    var isRx = r.status === 'rx';
+    h += '<div class="result' + (isRx ? '' : ' refer') + '">';
+    h += '<p class="eyebrow">' + (isRx ? '建議處方' : '建議下一步') + '</p><div class="rx-title">' + esc(r.title) + '</div>';
+    if (isRx) {
+      h += '<div class="box"><h4>藥物與劑量</h4>' + list(r.meds) + '</div>';
+      h += '<div class="two"><div class="box"><div class="lab">療程</div><b>' + esc(r.duration) + '</b></div><div class="box"><div class="lab">文獻除菌率（非個人預測）</div>' + esc(r.data) + '</div></div>';
+      h += '<div class="box"><h4>用藥提醒</h4>' + esc(r.safety) + '</div>';
+    } else {
+      h += '<div class="box"><h4>處理步驟</h4>' + list(r.referSteps) + '</div>';
+    }
+    if (r.notes.length) h += '<div class="box"><h4>臨床提醒</h4>' + list(r.notes) + '</div>';
+    if (r.alts.length) {
+      h += '<div class="box"><h4>替代方案</h4>';
+      r.alts.forEach(function (a) { h += '<div class="alt"><b>' + esc(a.title) + '（' + esc(a.duration) + '）</b><div class="when">' + esc(a.when) + '</div>' + list(a.meds) + '<div class="when">' + esc(a.safety) + '</div></div>'; });
+      h += '</div>';
+    }
+    if (r.views.length) {
+      h += '<div class="box"><details><summary>三份指引怎麼說</summary>' + list(r.views.map(function (v) { return v.g + '：' + v.t; })) + '</details></div>';
+    }
+    h += '<div class="box"><h4>確認除菌</h4>' + list(r.toc) + '</div></div>';
+    $('#result').innerHTML = h;
+  }
+
+  var demoBar = $('#demoBar');
+  function clearDemo() { demoBar.hidden = true; }
+  form.addEventListener('change', function () { clearDemo(); render(); });
+  $('#demoClear').addEventListener('click', function () { clearDemo(); writeForm(HP.DEFAULTS); render(); });
+
+  function loadCase(c) {
+    var s = {}, k;
+    for (k in HP.DEFAULTS) s[k] = c.input[k] !== undefined ? c.input[k] : HP.DEFAULTS[k];
+    writeForm(s);
+    render();
+    $('#demoText').textContent = '示範資料：' + c.title + '（非真實病人）';
+    demoBar.hidden = false;
+    location.hash = 'tool';
+    show('tool');
+    window.scrollTo(0, 0);
+  }
+
+  function renderCases() {
+    var h = '';
+    TEACH.CASES.forEach(function (c) {
+      var r = HP.recommend(c.input);
+      h += '<article class="card case"><div class="bd"><h3>' + esc(c.title) + '</h3><p style="margin:0">' + esc(c.stem) + '</p><dl>';
+      c.data.forEach(function (d) { h += '<dt>' + esc(d[0]) + '</dt><dd>' + esc(d[1]) + '</dd>'; });
+      h += '</dl><details><summary>查看解析</summary><p style="margin:8px 0 4px"><b>工具建議：</b>' + esc(r.title) + '（' + esc(r.duration) + '）</p>' + list(c.think) + '<div class="alert amb" style="margin-top:10px"><b>常見陷阱：</b>' + esc(c.pitfall) + '</div></details>';
+      h += '<button class="btn ghost" type="button" data-case="' + c.id + '">帶入決策工具</button></div></article>';
+    });
+    var el = $('#cases');
+    el.innerHTML = '<p class="hint" style="margin:0 0 12px">6 例皆為虛構的教學病例。帶入工具後不會儲存任何資料。</p>' + h;
+    el.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-case]');
+      if (!b) return;
+      loadCase(TEACH.CASES.filter(function (c) { return c.id === b.getAttribute('data-case'); })[0]);
+    });
+  }
+
+  var answers = {};
+  function renderQuiz() {
+    var L = 'ABCD';
+    var done = Object.keys(answers).length;
+    var right = Object.keys(answers).filter(function (k) { return answers[k] === TEACH.QUIZ[k].a; }).length;
+    var h = '<div class="card"><div class="score"><span id="score">已答 ' + done + '／20，答對 ' + right + '</span><button class="btn ghost" type="button" id="quizReset">重新作答</button></div><div class="bd" style="padding-top:0">';
+    TEACH.QUIZ.forEach(function (q, n) {
+      var a = answers[n];
+      var answered = a !== undefined;
+      if (n === 0) h += '<h3 style="margin:16px 0 0">基礎題（1–10）</h3>';
+      if (n === 10) h += '<h3 style="margin:20px 0 0">高階題（11–20）</h3>';
+      h += '<div class="q"><p class="stem"><span class="tag ' + q.lv + '">' + (q.lv === 'b' ? '基礎' : '高階') + '</span>' + (n + 1) + '. ' + esc(q.q) + '</p>';
+      q.o.forEach(function (o, j) {
+        var cls = '';
+        if (answered && j === q.a) cls = ' ok';
+        else if (answered && j === a) cls = ' no';
+        h += '<button type="button" class="choice' + cls + '" data-q="' + n + '" data-o="' + j + '"' + (answered ? ' disabled' : '') + '>' + L[j] + '. ' + esc(o) + '</button>';
+      });
+      if (answered) h += '<div class="why"><b>' + (a === q.a ? '答對。' : '正確答案是 ' + L[q.a] + '。') + '</b>' + esc(q.why) + '</div>';
+      h += '</div>';
+    });
+    $('#quiz').innerHTML = h + '</div></div>';
+  }
+  $('#quiz').addEventListener('click', function (e) {
+    if (e.target.id === 'quizReset') { answers = {}; renderQuiz(); return; }
+    var b = e.target.closest('.choice');
+    if (!b || b.disabled) return;
+    var n = b.getAttribute('data-q');
+    answers[n] = Number(b.getAttribute('data-o'));
+    var y = window.scrollY;
+    renderQuiz();
+    window.scrollTo(0, y);
+    var next = $('.choice[data-q="' + n + '"]');
+    if (next) { var w = next.parentNode.querySelector('.why'); if (w) { w.setAttribute('tabindex', '-1'); w.focus({ preventScroll: true }); } }
+  });
+
+  function renderMap() {
+    var h = '<div class="card"><h2 class="hd">H. pylori 除菌心智圖</h2><div class="bd"><div class="map"><div class="root">H. pylori<br>除菌決策</div><div class="branches">';
+    TEACH.MAP.forEach(function (b) { h += '<div class="branch" style="--c:' + b.c + '"><h4>' + esc(b.t) + '</h4>' + list(b.i) + '</div>'; });
+    $('#map').innerHTML = h + '</div></div></div></div>';
+  }
+
+  function renderRef() {
+    $('#ref').innerHTML = '<div class="card"><h2 class="hd">三份指引比較</h2><div class="bd"><div class="tw"><table><thead><tr><th>情境</th><th>ACG 2024</th><th>Maastricht VI</th><th>Taipei II</th></tr></thead><tbody>'
+      + '<tr><td>第一線，藥敏不明</td><td>BQT 14 天</td><td>BQT；不可得時 concomitant</td><td>BQT；P-CAB 療法為替代</td></tr>'
+      + '<tr><td>Clarithromycin 三合一</td><td>需先有藥敏</td><td>低抗藥性且當地證實 ≥90%</td><td>需藥敏指引</td></tr>'
+      + '<tr><td>盤尼西林過敏</td><td>BQT；安排過敏檢測</td><td>BQT；檢測陰性後可用</td><td>BQT；P-CAB 不含 Amoxicillin 療法為替代</td></tr>'
+      + '<tr><td>三合一失敗</td><td>BQT；Levofloxacin 需藥敏</td><td>Levofloxacin 救援至少同等有效；BQT 亦為主要選項</td><td>不重複；依當地資料或藥敏</td></tr>'
+      + '<tr><td>BQT 失敗</td><td>Rifabutin 三合一</td><td>不重複；Levofloxacin 四合一、高劑量雙重或 Rifabutin</td><td>不重複；依當地資料或藥敏</td></tr>'
+      + '<tr><td>BQT 療程</td><td>14 天</td><td>14 天</td><td>10–14 天</td></tr>'
+      + '</tbody></table></div></div></div>'
+      + '<div class="card"><h2 class="hd">來源與查證範圍</h2><div class="bd"><ul class="src">'
+      + '<li><a href="https://gut.bmj.com/content/74/11/1767" target="_blank" rel="noopener">Liou JM, et al. Taipei Global Consensus II. Gut 2025;74:1767–91</a>：已讀全文治療章節（Q16–22）。</li>'
+      + '<li><a href="https://gut.bmj.com/content/71/9/1724" target="_blank" rel="noopener">Malfertheiner P, et al. Maastricht VI/Florence. Gut 2022;71:1724–62</a>：已讀診斷與治療工作組的相關段落。</li>'
+      + '<li><a href="https://doi.org/10.14309/ajg.0000000000002968" target="_blank" rel="noopener">Chey WD, et al. ACG Clinical Guideline. Am J Gastroenterol 2024;119:1730–53</a>：僅讀摘要；細節來自下兩項二手整理。</li>'
+      + '<li><a href="https://dig.pharmacy.uic.edu/faqs/2025-2/january-2025-faqs/what-are-the-latest-guideline-recommendations-for-the-treatment-of-helicobacter-pylori-infection-in-the-u-s/" target="_blank" rel="noopener">UIC Drug Information Group FAQ（2025）</a>：ACG 處方表的整理。</li>'
+      + '<li><a href="https://www.gastroenterologyandhepatology.net/archives/february-2026/practice-tips-from-the-updated-helicobacter-pylori-treatment-guidelines/" target="_blank" rel="noopener">Ventoso, Moss. Gastroenterol Hepatol 2026（G&amp;H）</a>：ACG 實務整理與除菌率數字。</li>'
+      + '<li><a href="https://www.wjgnet.com/1007-9327/full/v31/i47/114789.htm" target="_blank" rel="noopener">Issa T, et al. World J Gastroenterol 2025;31:114789</a>：社論，轉述 Wu PJ 等 1408 株台灣研究；原始論文未讀。</li>'
+      + '</ul><div class="alert amb"><b>尚未查證：</b>台灣健保給付與院內品項（包含 Vonoprazan、Rifabutin、鉍劑）；高劑量雙重療法的原始試驗劑量；Vonoprazan 與 Tetracycline 或 Minocycline 雙重療法的劑量；P-CAB 檢測前停藥天數。</div></div></div>';
+  }
+
+  var TABS = ['tool', 'cases', 'quiz', 'map', 'ref'];
+  function show(id) {
+    if (TABS.indexOf(id) < 0) id = 'tool';
+    TABS.forEach(function (t) {
+      $('#' + t).hidden = t !== id;
+      var b = $('#t-' + t);
+      b.setAttribute('aria-selected', String(t === id));
+      b.tabIndex = t === id ? 0 : -1;
+    });
+  }
+  var tablist = $('.tabs');
+  tablist.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-tab]');
+    if (!b) return;
+    location.hash = b.getAttribute('data-tab');
+    show(b.getAttribute('data-tab'));
+  });
+  tablist.addEventListener('keydown', function (e) {
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+    var cur = TABS.indexOf(location.hash.slice(1));
+    if (cur < 0) cur = 0;
+    var n = (cur + (e.key === 'ArrowRight' ? 1 : TABS.length - 1)) % TABS.length;
+    location.hash = TABS[n];
+    show(TABS[n]);
+    $('#t-' + TABS[n]).focus();
+  });
+  window.addEventListener('hashchange', function () { show(location.hash.slice(1)); });
+
+  writeForm(HP.DEFAULTS);
+  render();
+  renderCases();
+  renderQuiz();
+  renderMap();
+  renderRef();
+  show(location.hash.slice(1));
+
+  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+    window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+  }
+})();
+</script>
 </body>
 </html>

@@ -1,0 +1,12 @@
+{
+  "name": "H. pylori 除菌決策工具",
+  "short_name": "除菌決策",
+  "description": "依 ACG 2024、Maastricht VI 與 Taipei Global Consensus II 的幽門桿菌除菌決策工具",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f3f4f6",
+  "theme_color": "#2563eb",
+  "lang": "zh-TW",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}
