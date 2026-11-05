@@ -1,4 +1,4 @@
-var CACHE = 'hp-v2.0.0';
+var CACHE = 'hp-v2.1.0';
 var FILES = ['./', 'index.html', 'manifest.webmanifest', 'icon.svg'];
 
 self.addEventListener('install', function (e) {

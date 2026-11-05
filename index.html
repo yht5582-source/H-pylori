@@ -95,7 +95,7 @@ footer{font-size:.8125rem;color:var(--mute);text-align:center}
 <div class="wrap">
 <header>
   <h1>H. pylori 除菌決策工具</h1>
-  <p>依 ACG 2024、Maastricht VI/Florence 與 Taipei Global Consensus II｜v2.0｜成人臨床決策輔助</p>
+  <p>依 ACG 2024、Maastricht VI/Florence 與 Taipei Global Consensus II｜v2.1｜成人臨床決策輔助</p>
 </header>
 
 <nav class="tabs" role="tablist" aria-label="頁面分頁">
@@ -173,7 +173,7 @@ footer{font-size:.8125rem;color:var(--mute);text-align:center}
 /*ENGINE-START*/
 var HP = (function () {
   var PPI = 'PPI 標準劑量，每日 2 次';
-  var BIS = 'Bismuth subcitrate 120–300 mg，每日 4 次';
+  var BIS = 'Bismuth subcitrate 120–300 mg，每日 4 次（台灣健保品項：TDB 300 mg，標示為三氧化二鉍 120 mg 錠）';
   var TET = 'Tetracycline 500 mg，每日 4 次（不以 Doxycycline 取代）';
   var MET = 'Metronidazole 500 mg，每日 3–4 次';
   var R = {
@@ -191,19 +191,32 @@ var HP = (function () {
       safety: '含 Amoxicillin。FDA 警示肌腱炎與肌腱斷裂，年齡 >60 歲、器官移植或使用類固醇者風險較高。' },
     LEVO_M: { title: 'Levofloxacin + Metronidazole 三合一', meds: [PPI, 'Levofloxacin 500 mg，每日 1 次', 'Metronidazole 500 mg，每日 2 次'], duration: '14 天', data: '本頁未讀到過敏族群的除菌率',
       safety: 'FDA 警示肌腱炎與肌腱斷裂，年齡 >60 歲、器官移植或使用類固醇者風險較高。' },
-    LBQ: { title: 'Levofloxacin 鉍劑四合一', meds: [PPI, 'Levofloxacin 500 mg，每日 1 次', 'Amoxicillin 1000 mg，每日 2 次', 'Bismuth，每日 4 次'], duration: '至少 10 天（Maastricht VI）', data: 'Maastricht VI 引述網絡統合分析，為二線最有效的處方之一',
+    LBQ: { title: 'Levofloxacin 鉍劑四合一', meds: [PPI, 'Levofloxacin 500 mg，每日 1 次', 'Amoxicillin 500 mg，每日 4 次', 'Tripotassium dicitrato bismuthate 300 mg，每日 4 次'], duration: '10–14 天', data: 'Maastricht VI 引述網絡統合分析，為二線最有效的處方之一。劑量依內科學誌 2024 表二。',
       safety: '含 Amoxicillin。FDA 警示肌腱炎與肌腱斷裂。藥敏不明時，ACG 不建議使用。' },
-    HDDT: { title: '高劑量 PPI + Amoxicillin 雙重療法', meds: ['PPI 每日 4 次', 'Amoxicillin 750 mg，每日 4 次'], duration: '14 天', data: '本頁未讀到可引用的除菌率。劑量沿用原頁，未重新核對原始試驗。',
+    HDDT: { title: '高劑量 PPI + Amoxicillin 雙重療法', meds: ['PPI 標準劑量，每日 4 次', 'Amoxicillin 750 mg，每日 4 次'], duration: '14 天', data: '台灣二線 RCT 89%（10 天序列療法 52%）；德國救援 RCT 76%（BQT 81%）（內科學誌 2024 引述）',
       safety: '含 Amoxicillin。ACG 認為北美證據不足以推薦作為救援處方；Maastricht VI 列為可能選項。' },
     PCM: { title: 'PPI + Clarithromycin + Metronidazole', meds: [PPI, 'Clarithromycin 500 mg，每日 2 次', 'Metronidazole 500 mg，每日 2 次'], duration: '14 天', data: '本頁未讀到可引用的除菌率',
       safety: '僅限藥敏證實 Clarithromycin 敏感時使用。注意 Clarithromycin 的交互作用與 QT。' },
-    PCAB_NOAMOX: { title: '不含 Amoxicillin 的 P-CAB 雙重療法', meds: ['Vonoprazan + Tetracycline，或 Vonoprazan + Minocycline（劑量請查原始試驗）'], duration: '依原始試驗', data: 'Vonoprazan + Tetracycline 92.0–94.5%；Vonoprazan + Minocycline ITT 90.9%（Taipei II 引述）',
-      safety: 'Taipei II 列為 BQT 禁忌、缺藥或無法耐受時的替代方案。本頁未讀原始試驗，因此不列劑量。' }
+    PCAB_NOAMOX: { title: '不含 Amoxicillin 的 P-CAB 雙重療法', meds: ['選項一：Vonoprazan 20 mg，每日 2 次 + Tetracycline 500 mg，每日 3 次', '選項二：Vonoprazan 20 mg，每日 2 次 + Minocycline 100 mg，每日 2 次'], duration: '14 天', data: 'Tetracycline 組：過敏初治 RCT ITT 92.0%，BQT 89.3%（Gao, Gut 2024）。Minocycline 組：初治 ITT 87.5%，BQT 88.3%（Li 2025）；救援僅 76.7%（Gao 2025）。',
+      safety: 'Taipei II 列為 BQT 禁忌、缺藥或無法耐受時的替代方案。試驗多在中國進行：Tetracycline 組為初治過敏者，內科學誌 2024 另列 ≥70 kg 用每日 4 次；Minocycline 組未確認收納過敏者，頭暈常見（18.3%）。' }
   };
+
+  // 健保用藥品項查詢 115/11/05（資料更新 115/10/27）；給付規定第七節 114.07.24、第十節 115.07.23。
+  var NHI_V = '健保用藥品項（含歷次異動）查無 Vonoprazan，不在健保給付內；台灣藥證未查證，可能無法取得。';
+  var NHI_L = '第 10.8.2.3 條 Levofloxacin 限慢性支氣管炎急性惡化、社區性肺炎、複雜性泌尿道感染，未列幽門桿菌。開立前請確認申報方式或自費。';
+  var NHI_R = 'Mycobutin 150 mg 有健保品項，但未列給付規定章節，所見院內適應症為結核病，未見幽門桿菌條文。';
+  var NHI_C = 'Clarithromycin 用於除菌：不超過 14 日，總量 500 mg 錠 28 顆為限。';
+  var NHI = {
+    BQT: '鉍劑與 Tetracycline 都有健保品項；有收載不等於有貨，請查院內。再次治療需附報告說明理由。',
+    VA: NHI_V, TRIPLE: NHI_C, CONCOMITANT: NHI_C, RIF: NHI_R, LEVO_T: NHI_L, LEVO_M: NHI_L, LBQ: NHI_L,
+    HDDT: '藥品本身都有健保品項，但每日 4 次 PPI 是否符合申報未查證。再次治療需附報告說明理由。',
+    PCM: NHI_C, PCAB_NOAMOX: NHI_V
+  };
+  Object.keys(R).forEach(function (k) { R[k].nhi = NHI[k]; });
 
   var DEFAULTS = { line: 'first', allergy: 'none', resistance: 'high', macrolide: false, astClari: 'unknown', astLevo: 'unknown', fails: 1, clari: false, levo: false, bqt: false, rif: false, dual: false, bqtOff: false, alarm: false, special: false };
 
-  function alt(key, when) { return { key: key, title: R[key].title, meds: R[key].meds, duration: R[key].duration, when: when, safety: R[key].safety }; }
+  function alt(key, when) { return { key: key, title: R[key].title, meds: R[key].meds, duration: R[key].duration, when: when, safety: R[key].safety, nhi: R[key].nhi }; }
 
   function recommend(input) {
     var i = {}, k;
@@ -233,7 +246,9 @@ var HP = (function () {
           main = 'VA';
           if (i.astClari !== 'R' && !i.macrolide) alts.push(alt('CONCOMITANT', 'Maastricht VI：BQT 不可得時可考慮。'));
           alts.push(alt('RIF', 'ACG 2024 的經驗性替代方案（條件式建議）。'));
+          alts.push(alt('HDDT', 'Maastricht VI：當地證實有效時可考慮。'));
         }
+        notes.push('Vonoprazan 在健保用藥品項查無資料，開立前請先確認院內能否取得。');
       } else if (allergic) {
         main = 'BQT';
       } else if (i.astClari === 'S') {
@@ -295,7 +310,7 @@ var HP = (function () {
 
     var res;
     if (status === 'refer') res = { status: 'refer', title: referTitle, meds: [], duration: '—', data: '—', safety: '', referSteps: referSteps };
-    else res = { status: 'rx', key: main, title: R[main].title, meds: R[main].meds, duration: R[main].duration, data: R[main].data, safety: R[main].safety, referSteps: [] };
+    else res = { status: 'rx', key: main, title: R[main].title, meds: R[main].meds, duration: R[main].duration, data: R[main].data, safety: R[main].safety, nhi: R[main].nhi, referSteps: [] };
     return finish(res, alts, alerts, notes, views, i);
   }
 
@@ -308,7 +323,7 @@ var HP = (function () {
   var TOC = [
     '所有病人都要確認除菌：療程結束後 4–6 週，以尿素呼氣或糞便抗原檢測（ACG 2024、Maastricht VI、Taipei II）。',
     '檢測前：抗生素與鉍劑停用至少 4 週，PPI 停用 14 天；症狀可用 H2 阻斷劑或制酸劑（Maastricht VI）。',
-    'P-CAB 的停藥天數在所讀指引中未見明確建議；本工具假設至少比照 PPI。',
+    'P-CAB 的檢測前停藥天數：Voquezna 仿單與三份指引都未明定。本工具假設至少 14 天（比照 PPI），並非證據結論。',
     '血清抗體不能用來判定除菌成功（Maastricht VI）。'
   ];
 
@@ -335,7 +350,7 @@ var TEACH = {
     { id: 'c3', title: '病例 3：Clarithromycin 三合一失敗', stem: '58 歲男性，兩年前接受 Clarithromycin 三合一 14 天，遵從性良好。呼氣檢查仍為陽性。無過敏，未做藥敏。',
       data: [['階段', '救援，第 1 次失敗'], ['曾用', '含 Clarithromycin'], ['藥敏', '未做']],
       input: { line: 'rescue', allergy: 'none', fails: 1, clari: true }, expect: 'BQT',
-      think: ['不重複使用 Clarithromycin。', '未用過 BQT，ACG 2024 建議用 BQT。', '指引在此不一致：Maastricht VI 認為 Levofloxacin 救援至少同樣有效；但台灣抗藥性約 28.7%，本工具建議先檢測。'],
+      think: ['不重複使用 Clarithromycin。', '未用過 BQT，ACG 2024 建議用 BQT。', '指引在此不一致：Maastricht VI 認為 Levofloxacin 救援至少同樣有效；但台灣抗藥性約 28.7%，本工具建議先檢測。', '健保第 10.8.2.3 條也未將幽門桿菌列入 Levofloxacin 的適用範圍。'],
       pitfall: '只因為「換了藥」就直接開 Levofloxacin。沒有藥敏時，ACG 2024 不建議這麼做。' },
     { id: 'c4', title: '病例 4：三合一與 BQT 都失敗，正在用類固醇', stem: '66 歲女性，類風濕性關節炎，長期服用 prednisolone。已先後接受 Clarithromycin 三合一與 BQT，都確實服完，仍為陽性。無過敏，當地無法做藥敏。',
       data: [['階段', '救援，第 2 次失敗'], ['曾用', 'Clarithromycin、BQT'], ['風險', '>60 歲且用類固醇']],
@@ -350,7 +365,7 @@ var TEACH = {
     { id: 'c6', title: '病例 6：缺鐵性貧血、胃癌家族史，加上 BQT 缺藥', stem: '40 歲女性，缺鐵性貧血，母親有胃癌病史，糞便抗原陽性。院內 Tetracycline 缺藥。無過敏，未做藥敏。',
       data: [['階段', '第一線'], ['警示', '缺鐵性貧血、一等親胃癌'], ['限制', 'BQT 不可行']],
       input: { line: 'first', allergy: 'none', bqtOff: true, alarm: true }, expect: 'VA',
-      think: ['先安排內視鏡：缺鐵性貧血是警示徵象，且有一等親胃癌家族史。', 'ACG 2024 不建議以 Doxycycline 取代 Tetracycline。', 'BQT 不可行且無過敏時，Vonoprazan + Amoxicillin 是合理替代，並須確認院內可取得。'],
+      think: ['先安排內視鏡：缺鐵性貧血是警示徵象，且有一等親胃癌家族史。', 'ACG 2024 不建議以 Doxycycline 取代 Tetracycline。', 'BQT 不可行且無過敏時，指引以 Vonoprazan + Amoxicillin 為替代。但健保品項查無 Vonoprazan；院內無藥時，可考慮 concomitant、Rifabutin 或高劑量雙重療法。'],
       pitfall: '只處理感染、未做內視鏡，可能延誤胃癌診斷。' }
   ],
   QUIZ: [
@@ -382,6 +397,7 @@ var TEACH = {
     { c: '#ea580c', t: '救援', i: ['不重複 Clarithromycin、Levofloxacin', '未用過 BQT：BQT', '用過 BQT：Rifabutin；藥敏敏感可用 Levofloxacin', '失敗 2 次以上：先做藥敏'] },
     { c: '#0d9488', t: '確認除菌', i: ['結束後 4–6 週', '抗生素、鉍劑停 4 週；PPI 停 14 天', '血清抗體不適用', '仍陽性：提供救援'] },
     { c: '#15803d', t: '台灣抗藥性 2019–2024', i: ['Clarithromycin 13.7–24.3%', 'Levofloxacin 約 28.7%', 'Metronidazole 35.5% → 13.0%', 'Tetracycline 0% → 3.5%'] },
+    { c: '#475569', t: '台灣健保（115/11 查詢）', i: ['初次除菌：UBT、糞便抗原或切片確診，附報告', '療程以 2 週為原則；再次治療需說明理由', 'Levofloxacin 條文未列幽門桿菌', 'Vonoprazan 查無健保品項'] },
     { c: '#b45309', t: '用藥安全', i: ['Levofloxacin：肌腱風險', 'Clarithromycin：交互作用、QT', 'Rifabutin：骨髓抑制', '不以 Doxycycline 取代 Tetracycline'] }
   ]
 };
@@ -437,13 +453,14 @@ if (typeof module !== 'undefined') module.exports = TEACH;
       h += '<div class="box"><h4>藥物與劑量</h4>' + list(r.meds) + '</div>';
       h += '<div class="two"><div class="box"><div class="lab">療程</div><b>' + esc(r.duration) + '</b></div><div class="box"><div class="lab">文獻除菌率（非個人預測）</div>' + esc(r.data) + '</div></div>';
       h += '<div class="box"><h4>用藥提醒</h4>' + esc(r.safety) + '</div>';
+      h += '<div class="box"><h4>台灣健保</h4>' + esc(r.nhi) + '</div>';
     } else {
       h += '<div class="box"><h4>處理步驟</h4>' + list(r.referSteps) + '</div>';
     }
     if (r.notes.length) h += '<div class="box"><h4>臨床提醒</h4>' + list(r.notes) + '</div>';
     if (r.alts.length) {
       h += '<div class="box"><h4>替代方案</h4>';
-      r.alts.forEach(function (a) { h += '<div class="alt"><b>' + esc(a.title) + '（' + esc(a.duration) + '）</b><div class="when">' + esc(a.when) + '</div>' + list(a.meds) + '<div class="when">' + esc(a.safety) + '</div></div>'; });
+      r.alts.forEach(function (a) { h += '<div class="alt"><b>' + esc(a.title) + '（' + esc(a.duration) + '）</b><div class="when">' + esc(a.when) + '</div>' + list(a.meds) + '<div class="when">' + esc(a.safety) + '</div><div class="when"><b style="display:inline">健保：</b>' + esc(a.nhi) + '</div></div>'; });
       h += '</div>';
     }
     if (r.views.length) {
@@ -539,6 +556,15 @@ if (typeof module !== 'undefined') module.exports = TEACH;
       + '<tr><td>BQT 失敗</td><td>Rifabutin 三合一</td><td>不重複；Levofloxacin 四合一、高劑量雙重或 Rifabutin</td><td>不重複；依當地資料或藥敏</td></tr>'
       + '<tr><td>BQT 療程</td><td>14 天</td><td>14 天</td><td>10–14 天</td></tr>'
       + '</tbody></table></div></div></div>'
+      + '<div class="card"><h2 class="hd">台灣健保現況</h2><div class="bd"><p class="hint" style="margin:0 0 10px">查詢日 115/11/05（用藥品項資料更新 115/10/27）。給付規定：第七節 114.07.24、第十節 115.07.23。「有健保品項」不代表院內有藥，也不代表該用途可以申報。</p><div class="tw"><table><thead><tr><th>項目</th><th>查證結果</th></tr></thead><tbody>'
+      + '<tr><td>除菌給付條件</td><td>第 7.1 節：經尿素呼氣、糞便抗原或內視鏡切片確診者，可做初次消除治療，需附報告並註明初次（113/8/1）。療程以二週為原則；延長或再次治療需附報告說明理由。</td></tr>'
+      + '<tr><td>Clarithromycin</td><td>第十節：用於消化性潰瘍之除菌，不超過 14 日，總量 250 mg 56 顆或 500 mg 28 顆為限。</td></tr>'
+      + '<tr><td>Levofloxacin</td><td>第 10.8.2.3 條：限 18 歲以上慢性支氣管炎急性惡化、社區性肺炎、複雜性泌尿道感染，未列幽門桿菌。CDE 評估報告曾評估放寬；現行條文未見。</td></tr>'
+      + '<tr><td>Vonoprazan</td><td>健保用藥品項以成分 VONOPRAZAN 與品名 TAKECAB 查詢（含歷次異動）皆無資料。</td></tr>'
+      + '<tr><td>Rifabutin</td><td>Mycobutin 150 mg 有健保品項（BC20999100，NT$93），未列給付規定章節；一家醫院藥品頁的用途為結核病，未見幽門桿菌條文。</td></tr>'
+      + '<tr><td>鉍劑</td><td>有健保品項，例如 AC37837100、AC41225100（成分 TDB 300 mg，標示三氧化二鉍 120 mg，規定 7.1）。</td></tr>'
+      + '<tr><td>Tetracycline</td><td>250 mg 與 500 mg 口服劑型有健保品項（規定 10.1）。供貨狀況未查。</td></tr>'
+      + '</tbody></table></div></div></div>'
       + '<div class="card"><h2 class="hd">來源與查證範圍</h2><div class="bd"><ul class="src">'
       + '<li><a href="https://gut.bmj.com/content/74/11/1767" target="_blank" rel="noopener">Liou JM, et al. Taipei Global Consensus II. Gut 2025;74:1767–91</a>：已讀全文治療章節（Q16–22）。</li>'
       + '<li><a href="https://gut.bmj.com/content/71/9/1724" target="_blank" rel="noopener">Malfertheiner P, et al. Maastricht VI/Florence. Gut 2022;71:1724–62</a>：已讀診斷與治療工作組的相關段落。</li>'
@@ -546,7 +572,12 @@ if (typeof module !== 'undefined') module.exports = TEACH;
       + '<li><a href="https://dig.pharmacy.uic.edu/faqs/2025-2/january-2025-faqs/what-are-the-latest-guideline-recommendations-for-the-treatment-of-helicobacter-pylori-infection-in-the-u-s/" target="_blank" rel="noopener">UIC Drug Information Group FAQ（2025）</a>：ACG 處方表的整理。</li>'
       + '<li><a href="https://www.gastroenterologyandhepatology.net/archives/february-2026/practice-tips-from-the-updated-helicobacter-pylori-treatment-guidelines/" target="_blank" rel="noopener">Ventoso, Moss. Gastroenterol Hepatol 2026（G&amp;H）</a>：ACG 實務整理與除菌率數字。</li>'
       + '<li><a href="https://www.wjgnet.com/1007-9327/full/v31/i47/114789.htm" target="_blank" rel="noopener">Issa T, et al. World J Gastroenterol 2025;31:114789</a>：社論，轉述 Wu PJ 等 1408 株台灣研究；原始論文未讀。</li>'
-      + '</ul><div class="alert amb"><b>尚未查證：</b>台灣健保給付與院內品項（包含 Vonoprazan、Rifabutin、鉍劑）；高劑量雙重療法的原始試驗劑量；Vonoprazan 與 Tetracycline 或 Minocycline 雙重療法的劑量；P-CAB 檢測前停藥天數。</div></div></div>';
+      + '<li><a href="https://www.nhi.gov.tw/ch/cp-7593-ad2a9-3397-1.html" target="_blank" rel="noopener">健保署藥品給付規定第七節、第十節</a>與<a href="https://info.nhi.gov.tw/INAE3000/INAE3000S01" target="_blank" rel="noopener">健保用藥品項查詢</a>：已讀條文原文；鉍劑結果只看第 1 頁。</li>'
+      + '<li><a href="https://www.tsim.org.tw/ehc-tsim/s/viewFile?documentId=c6f279ebeab24609953da817b51e92dd" target="_blank" rel="noopener">石志安等. 內科學誌 2024;35:412–9</a>：已讀表一、表二（高劑量雙重、Levofloxacin 四合一的劑量）。</li>'
+      + '<li><a href="https://gut.bmj.com/content/73/9/1414" target="_blank" rel="noopener">Gao W, et al. Gut 2024;73:1414–20</a>：Vonoprazan + Tetracycline，過敏者 RCT，已讀全文的相關段落。</li>'
+      + '<li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12374092" target="_blank" rel="noopener">Li M, et al. Ther Adv Gastroenterol 2025</a>、<a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12655117/" target="_blank" rel="noopener">Gao W, et al. Pathogens 2025</a>：Vonoprazan + Minocycline。</li>'
+      + '<li><a href="https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=0cc52ac5-77ec-4d66-a770-762a1a960914" target="_blank" rel="noopener">Voquezna 美國仿單（DailyMed）</a>：第 1–12.4 節未見 UBT 或糞便抗原檢測前的停藥規定。</li>'
+      + '</ul><div class="alert amb"><b>尚未查證：</b>Vonoprazan 的台灣藥證（TFDA 查詢需人工驗證碼）；各院院內品項與供貨；每日 4 次 PPI 的申報；Yang 2015 全文（只見摘要片段）；PHALCON-HP 計畫書。</div></div></div>';
   }
 
   var TABS = ['tool', 'cases', 'quiz', 'map', 'ref'];

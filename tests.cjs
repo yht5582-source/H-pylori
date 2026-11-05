@@ -93,6 +93,27 @@ for (const bqtOff of bools) {
 }
 t('exhaustive combos ran', () => assert(combos > 10000, String(combos)));
 
+// --- Verified doses and coverage (checked 2026-11-05) ---
+t('every regimen has a coverage note', () => Object.keys(HP.REG).forEach(k => assert(HP.REG[k].nhi && HP.REG[k].nhi.length > 10, k)));
+t('high-dose dual uses standard-dose PPI QID', () => {
+  assert.deepStrictEqual(Array.from(HP.REG.HDDT.meds), ['PPI 標準劑量，每日 4 次', 'Amoxicillin 750 mg，每日 4 次']);
+});
+t('levofloxacin-bismuth quadruple doses', () => assert(HP.REG.LBQ.meds.some(m => /Amoxicillin 500 mg，每日 4 次/.test(m))));
+t('amoxicillin-free P-CAB doses', () => {
+  const m = HP.REG.PCAB_NOAMOX.meds.join(' ');
+  assert(/Tetracycline 500 mg，每日 3 次/.test(m) && /Minocycline 100 mg，每日 2 次/.test(m) && !/Amoxicillin/.test(m));
+  assert.strictEqual(HP.REG.PCAB_NOAMOX.duration, '14 天');
+});
+t('levofloxacin regimens flag the NHI rule', () => ['LEVO_T', 'LEVO_M', 'LBQ'].forEach(k => assert(/未列幽門桿菌/.test(HP.REG[k].nhi), k)));
+t('vonoprazan regimens flag no NHI listing', () => ['VA', 'PCAB_NOAMOX'].forEach(k => assert(/查無 Vonoprazan/.test(HP.REG[k].nhi), k)));
+t('P-CAB hold is labelled an assumption', () => assert(HP.TOC.some(x => /P-CAB/.test(x) && /假設/.test(x))));
+t('BQT unavailable lists an option without vonoprazan', () => {
+  const r = HP.recommend({ bqtOff: true });
+  assert(r.alts.some(a => a.key === 'HDDT') && r.alts.some(a => a.key === 'RIF'));
+  assert(r.notes.some(n => /Vonoprazan/.test(n)));
+});
+t('unverified brand name not on page', () => assert(!/福速胃/.test(html)));
+
 // --- Teaching content ---
 t('6 cases', () => assert.strictEqual(TEACH.CASES.length, 6));
 TEACH.CASES.forEach(c => t('case matches engine: ' + c.id, () => assert.strictEqual(HP.recommend(c.input).key, c.expect)));

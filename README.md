@@ -13,12 +13,18 @@
 
 三份指引意見不同時，頁面會並列呈現，例如三合一失敗後能否用 Levofloxacin。
 
+## 台灣健保（查詢日 115/11/05）
+
+- 第 7.1 節：確診後可做初次除菌，療程以二週為原則，再次治療需說明理由
+- Levofloxacin（第 10.8.2.3 條）未列幽門桿菌；Clarithromycin 除菌不超過 14 日
+- 健保用藥品項查無 Vonoprazan；Rifabutin、鉍劑、Tetracycline 有品項，但收載不等於可申報或有貨
+
 ## 尚未查證
 
-- 台灣健保給付與院內品項（Vonoprazan、Rifabutin、鉍劑等）
-- 高劑量雙重療法的原始試驗劑量（沿用舊版）
-- Vonoprazan 與 Tetracycline 或 Minocycline 雙重療法的劑量（因此頁面不列）
-- P-CAB 檢測前停藥天數（工具假設至少比照 PPI）
+- Vonoprazan 的台灣藥證（TFDA 查詢需人工驗證碼）
+- 各院院內品項與供貨；每日 4 次 PPI 的申報
+- Yang 2015 全文與 PHALCON-HP 計畫書
+- P-CAB 檢測前停藥天數：仿單與指引都未明定，工具假設至少 14 天
 
 ## 檔案
 
