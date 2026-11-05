@@ -165,6 +165,7 @@ t('correct option is not usually the longest', () => {
 t('mind map has branches', () => assert(TEACH.MAP.length >= 5));
 
 // --- Page-level regressions ---
+t('mind map branches collapse', () => assert(/<details class="branch" open/.test(html) && /id="mapOpen"/.test(html) && /id="mapClose"/.test(html)));
 t('no third-party scripts', () => assert(!/<script[^>]+src=/.test(html)));
 t('zoom is allowed', () => assert(!/user-scalable=no|maximum-scale/.test(html)));
 t('no blob manifest', () => assert(!/createObjectURL/.test(html)));

@@ -78,8 +78,12 @@ summary{cursor:pointer;font-weight:600;color:var(--blue-d);min-height:32px}
 .branches{border-left:3px solid #93c5fd;padding-left:16px}
 .branch{position:relative;background:#fff;border:1px solid var(--line);border-top:4px solid var(--c,#2563eb);border-radius:9px;padding:9px 13px;margin:9px 0}
 .branch:before{content:"";position:absolute;left:-19px;top:22px;width:16px;border-top:3px solid #93c5fd}
-.branch h4{margin:0 0 3px;font-size:.9375rem}
-.branch ul{margin:0;padding-left:18px;font-size:.875rem}
+.branch summary{display:flex;align-items:center;gap:8px;list-style:none;color:var(--ink);font-size:.9375rem;font-weight:700;min-height:44px;padding:4px 13px;margin:-9px -13px}
+.branch summary::-webkit-details-marker{display:none}
+.branch summary:after{content:"＋";margin-left:auto;color:var(--mute);font-weight:400}
+.branch[open] summary:after{content:"－"}
+.branch ul{margin:8px 0 0;padding-left:18px;font-size:.875rem}
+.map-tools{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
 table{border-collapse:collapse;width:100%;font-size:.875rem}
 th,td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
 th{background:var(--blue-l)}
@@ -95,7 +99,7 @@ footer{font-size:.8125rem;color:var(--mute);text-align:center}
 <div class="wrap">
 <header>
   <h1>H. pylori 除菌決策工具</h1>
-  <p>依 ACG 2024、Maastricht VI/Florence 與 Taipei Global Consensus II｜v2.2｜成人臨床決策輔助</p>
+  <p>依 ACG 2024、Maastricht VI/Florence 與 Taipei Global Consensus II｜v2.3｜成人臨床決策輔助</p>
 </header>
 
 <nav class="tabs" role="tablist" aria-label="頁面分頁">
@@ -548,9 +552,13 @@ if (typeof module !== 'undefined') module.exports = TEACH;
   });
 
   function renderMap() {
-    var h = '<div class="card"><h2 class="hd">H. pylori 除菌心智圖</h2><div class="bd"><div class="map"><div class="root">H. pylori<br>除菌決策</div><div class="branches">';
-    TEACH.MAP.forEach(function (b) { h += '<div class="branch" style="--c:' + b.c + '"><h4>' + esc(b.t) + '</h4>' + list(b.i) + '</div>'; });
+    var h = '<div class="card"><h2 class="hd">H. pylori 除菌心智圖</h2><div class="bd"><div class="map-tools"><button class="btn ghost" type="button" id="mapOpen">全部展開</button><button class="btn ghost" type="button" id="mapClose">全部收合</button></div><div class="map"><div class="root">H. pylori<br>除菌決策</div><div class="branches">';
+    TEACH.MAP.forEach(function (b) { h += '<details class="branch" open style="--c:' + b.c + '"><summary>' + esc(b.t) + '</summary>' + list(b.i) + '</details>'; });
     $('#map').innerHTML = h + '</div></div></div></div>';
+    var setAll = function (open) { $$('#map .branch').forEach(function (d) { d.open = open; }); };
+    $('#mapOpen').addEventListener('click', function () { setAll(true); });
+    $('#mapClose').addEventListener('click', function () { setAll(false); });
+    window.addEventListener('beforeprint', function () { setAll(true); });
   }
 
   function renderRef() {
